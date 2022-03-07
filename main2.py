@@ -1,137 +1,66 @@
+from ast import Eq
 from pysmt.shortcuts import *
 from pysmt.typing import *
 
-from main import FirstOrderTransitionSystem, KInduction_FOTS
+from main import FirstOrderTransitionSystem, KInduction_FOTS, next_var
 
 word_len = 16
 
 BV16 = BVType(word_len)
 
+# constantes auxiliares
+L = 2**word_len - 1
+N    = BV(L,width=word_len)
+zero = BV(0,width=word_len)
+um   = BV(1,width=word_len)
+dois = BV(2,width=word_len)
 
-def bitVecIntComp(vec, i, bin_op, size=word_len):
-    intVec = BV(i, size)
-    if i == 0:
-        intVec = BVZero(size)
-    elif i == 1:
-        intVec = BVOne(size)
-    if bin_op == "EQ":
-        return Equals(vec, intVec)
-    elif bin_op == "NEQ":
-        return Equals(vec, intVec)
-    elif bin_op == "GT":
-        return BVUGT(vec, intVec)
-    elif bin_op == "GE":
-        return BVUGE(vec, intVec)
-    elif bin_op == "LT":
-        return BVULT(vec, intVec)
-    elif bin_op == "LE":
-        return BVULE(vec, intVec)
-    raise ValueError("Wrong operator supplied to helper function bitVecIntComp!")
+# Variáveis
+x  = Symbol("x",BVType(word_len))
+m  = Symbol("m",BVType(word_len))
+n  = Symbol("n",BVType(word_len))
+y  = Symbol("y",BVType(word_len))
+r  = Symbol("r",BVType(word_len))
+pc = Symbol("pc", INT)
 
+variables = [x,m,n,r,y]
 
-def init(state):
-    l = []
+pre  =  And([BVUGT(m,zero),  # m > 0
+             BVUGT(n,zero),  # n > 0
+             Equals(r,zero), # r = 0
+             Equals(x,m),    # x = m
+             Equals(y,n),    # y = n
+             BVULT(m,N),     # m < N
+             BVULT(n,N),
+             Equals(pc, Int(0))])    # n < N
 
-    l.append(bitVecIntComp(state['m'], 0, "GE"))
-    l.append(bitVecIntComp(state['n'], 0, "GE"))
-    l.append(bitVecIntComp(state['r'], 0, "EQ"))
-    l.append(Equals(state['x'], state['m']))
-    l.append(Equals(state['y'], state['n']))
-    l.append(Equals(state['pc'], Int(0)))
+while_check   =  And(BVUGT(y , zero), Equals(pc, Int(0)))      # y > 0, pc == 0
 
-    return And(l)
+pc1      =  And(Equals(next_var(y), BVSub(y, um)),     # y = y-1
+                Equals(next_var(r), BVAdd(r, x)),       # r = r + x
+                Equals(next_var(x), BVLShl(x, um)),     # x = x << 1
+                Equals(next_var(pc), Int(2)))
 
+pc2     =  And(Equals(next_var(next_var(y)), BVLShr(next_var(y), um)),
+               Equals(next_var(next_var(x)), BVLShl(next_var(x), um)),
+               Equals(next_var(next_var(pc)), Int(0)))
 
-def trans(curr, prox):
-    l = []
+pc2_     =  And(Equals(next_var(y), BVLShr(y, um)),
+               Equals(next_var(x), BVLShl(x, um)),
+               Equals(next_var(pc), Int(2)))
 
-    state1 = [Equals(curr['pc'], Int(0)),
-              bitVecIntComp(curr['y'], 0, "GT"),
-              Equals(prox['y'], curr['y']),
-              Equals(prox['m'], curr['m']),
-              Equals(prox['r'], curr['r']),
-              Equals(prox['x'], curr['x']),
-              Equals(prox['n'], curr['n']),
-              Equals(prox['pc'], Int(1))]
-    l.append(And(state1))
+skip = And([EqualsOrIff(v,next_var(v)) for v in variables])
 
-    state2 = [Equals(curr['pc'], Int(0)),
-              bitVecIntComp(curr['y'], 0, "LE"),
-              Equals(prox['y'], curr['y']),
-              Equals(prox['m'], curr['m']),
-              Equals(prox['r'], curr['r']),
-              Equals(prox['x'], curr['x']),
-              Equals(prox['n'], curr['n']),
-              Equals(prox['pc'], Int(3))]
-    l.append(And(state2))
+body  = Ite(And(Equals(pc, Int(1)), Equals(BVAnd(y, um), um)), And(pc1, pc2), skip)               # if (y & 1 == 1) then left else right
 
-    state3 = [Equals(curr['pc'], Int(1)),
-              Equals(BVAnd(curr['y'], BVOne(word_len)), BVOne(word_len)),
-              Equals(prox['y'], BVSub(curr['y'], BVOne(word_len))),
-              Equals(prox['r'], BVAdd(curr['r'], curr['x'])),
-              Equals(prox['x'], curr['x']),
-              Equals(prox['m'], curr['m']),
-              Equals(prox['n'], curr['n']),
-              Equals(prox['pc'], Int(2))]
-    l.append(And(state3))
+end = And([EqualsOrIff(v,next_var(v)) for v in variables], Equals(pc, Int(3)))
 
-    state4 = [Equals(curr['pc'], Int(1)),
-              NotEquals(BVAnd(curr['y'], BVOne(word_len)), BVOne(word_len)),
-              Equals(prox['y'], curr['y']),
-              Equals(prox['r'], curr['r']),
-              Equals(prox['x'], curr['x']),
-              Equals(prox['m'], curr['m']),
-              Equals(prox['n'], curr['n']),
-              Equals(prox['pc'], Int(2))]
-    l.append(And(state4))
+trans  = Ite(while_check, body, end)
 
-    state5 = [Equals(curr['pc'], Int(2)),
-              Equals(prox['x'], BVLShl(curr['x'], BVOne(word_len))),
-              Equals(prox['y'], BVLShr(curr['y'], BVOne(word_len))),
-              Equals(prox['m'], curr['m']),
-              Equals(prox['n'], curr['n']),
-              Equals(prox['r'], curr['r']),
-              Equals(prox['pc'], Int(0))]
-    l.append(And(state5))
+variante =  Plus(Minus(BVToNatural(y), pc), Int(3))
+positivo = GE(variante, Int(0))
 
-    state6 = [Equals(curr['pc'], Int(3)),
-              Equals(prox['y'], curr['y']),
-              Equals(prox['m'], curr['m']),
-              Equals(prox['r'], curr['r']),
-              Equals(prox['x'], curr['x']),
-              Equals(prox['n'], curr['n']),
-              Equals(prox['pc'], Int(3))]
-    l.append(And(state6))
-
-    return Or(l)
-
-
-state = {}
-state['x'] = Symbol('x', BV16)
-state['y'] = Symbol('y', BV16)
-state['r'] = Symbol('r', BV16)
-state['m'] = Symbol('m', BV16)
-state['n'] = Symbol('n', BV16)
-state['pc'] = Symbol('pc', INT)
-
-fots = FirstOrderTransitionSystem(
-    [
-        state['x'],
-        state['y'],
-        state['r'],
-        state['m'],
-        state['n'],
-        state['pc']
-    ], init(state), trans)
-
-
-def variante(state):
-    return Plus(Minus(BVToNatural(state['y']), state['pc']), Int(3))
-
-
-def positivo(state):
-    prop = GE(variante(state), Int(0))
-    return prop
+fots = FirstOrderTransitionSystem(variables, pre, trans)
 
 
 fots_k_ind = KInduction_FOTS(fots)
