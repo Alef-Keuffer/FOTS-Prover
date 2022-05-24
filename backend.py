@@ -13,9 +13,9 @@ def at_time(v, t):
 class FirstOrderTransitionSystem(object):
     """Trivial representation of a FOTS (First Order Transition System)."""
 
-    def __init__(self, variables, init, trans):
+    def __init__(self, init, trans):
         self.prime_variables = [next(v) for v in self.variables]
-        self.variables = variables
+        self.variables = list(set(init.get_free_variables()).union((trans.get_free_variables())))
         self.init = init
         self.trans = trans
 
