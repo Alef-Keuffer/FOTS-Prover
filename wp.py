@@ -1,9 +1,6 @@
 from pysmt.fnode import FNode
-from pysmt.shortcuts import Symbol, Not, And, Or, EqualsOrIff, Implies, Portfolio, Int
-from pysmt.shortcuts import Symbol, Not, And, Or, EqualsOrIff, Implies, BVUGE, Equals, BV, BVAnd, BVSub, BVLShr, BVLShl, \
-    BVMul, NotEquals, BVAdd, BVAShr, get_model, BVToNatural, ForAll
-from pysmt.shortcuts import is_sat, is_unsat, Solver, TRUE
-from pysmt.typing import BOOL, BVType, INT
+from pysmt.shortcuts import Symbol, And
+from pysmt.typing import INT
 
 
 def wp_(substitutions: dict[FNode, FNode], formula: FNode):
@@ -73,7 +70,7 @@ def example1():
 
 
 def example2():
-    from trabalho4 import next_var
+    from wd.trabalho4 import next_var
     # x = x + 1 ; assert x > 0
     x = Symbol("x", INT)
     nx = next_var(x)

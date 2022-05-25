@@ -1,7 +1,7 @@
 from pysmt.fnode import FNode
 from pysmt.shortcuts import Symbol, And, Or, Not, BVToNatural
 
-from nbackend import TransitionSystem, next_var
+from backend import TransitionSystem, next_var
 
 """
 assume m >= 0 and n >= 0 and r == 0 and x == m and y == n
