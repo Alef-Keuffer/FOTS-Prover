@@ -347,7 +347,7 @@ def example_failed_interpolation3():
     x = Symbol("x", INT)
     y = Symbol("y", BVType(4))
     formulas = [x.Equals(0), y.Equals(0)]
-    CustomMSatInterpolator(get_env(), logic=get_logic(And(formulas))).sequence_interpolant([y.Equals(0), x.Equals(0)])
+    itp(And(formulas))
 
 
 if __name__ == "__main__":
