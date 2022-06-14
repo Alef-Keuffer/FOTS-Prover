@@ -78,11 +78,12 @@ def example2():
     ns = nx.Equals(x + 1)
     return wp(ns, pos)
 
+
 class T:
     def __init__(self):
         self.variables = set()
         self.transitions = []
-    
+
     @staticmethod
     def prime(v):
         new_name = f"{v.symbol_name()}′" if len(v.symbol_name) < 2 else f"({v.symbol_name()})′"
