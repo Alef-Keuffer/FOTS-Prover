@@ -1,4 +1,4 @@
-from typing import Container
+from typing import Container, Callable
 
 from pysmt.fnode import FNode
 from pysmt.shortcuts import Symbol, Not, And, Or, EqualsOrIff, Implies, Portfolio, binary_interpolant, BVToNatural, \
@@ -135,6 +135,7 @@ class Status(Enum):
     UNSAFE2 = auto()
     SAT = auto()
     UNSAT = auto()
+    UNKNOWN = auto()
 
 
 def itp(formulas):
@@ -249,6 +250,103 @@ class IMC:
                 else:
                     R_i = R_i | I_i
                     i += 1
+
+
+def get_or_and(T, P, k):
+    """
+    :return: ∨{n=0…k}. ∧{i=0…n}. T(s_i,s_{i+1}) ∧ P(s_n)
+    """
+    OR_formulas = TRUE()
+    for n in range(k + 1):
+        OR_formulas |= (get_unrolling(T, 0, n - 1) & get_unrolling(P, n, n))
+    return OR_formulas
+
+
+def _lift(k, Inv, Q, s):
+    A = s == ...
+    B = ...
+    return binary_interpolant(A, B)
+
+
+def pdr(P: FNode,
+        TS: TransitionSystem,
+        get_currently_known_invariant=...,
+        strengthen=...,
+        lift=...,
+        k_init: int = 1,
+        k_max: int | float('inf') = float('inf'),
+        pd: bool = True,
+        inc: Callable[[int], int] = lambda n: n + 1,
+        ) -> bool | Status.UNKNOWN:
+    """
+    Iterative-Deepening k-Induction with Property Direction
+    as specified at D. Beyer and M. Dangl, “Software Verification with PDR: Implementation and Empirical Evaluation of the State of the Art,” arXiv:1908.06271 [cs], Feb. 2020, Accessed: Mar. 05, 2022. [Online]. Available: http://arxiv.org/abs/1908.06271
+
+    :param k_init: the initial value ≥1 for the bound `k`
+    :param k_max: an upper limit for the bound `k`
+    :param inc: a function ℕ → ℕ with ∀n ∈ ℕ: inc(n) > n
+    :param TS: Contains predicates defining the initial states and the transfer relation
+    :param P: The safety property
+    :param get_currently_known_invariant: used to obtain auxiliary invariants
+    :param pd: a boolean that enables or disables property direction
+    :param lift: ℕ × (S → 𝔹) × (S → 𝔹) × S → (S → 𝔹)
+                 where S is the set of program states.
+    :param strengthen: ℕ × (S → 𝔹) × (S → 𝔹) → (S → 𝔹)
+                       where S is the set of program states.
+
+    :return: `True` if `P` holds, `Status.UNKNOWN` if k > k_max , `False` otherwise
+    """
+
+    # current bound
+    k = k_init
+
+    # the invariant computed by this algorithm internally, and
+    InternalInv = True
+
+    # the set of current proof obligations.
+    O = set()
+
+    while k <= k_max:
+        O_prev = O
+        O = set()
+
+        base_case = get_unrolling(TS.init, 0, 0) & get_or_and(TS.trans, Not(P), k - 1)
+
+        if is_sat(base_case):
+            return False
+
+        forward_condition = get_unrolling(TS.init, 0, 0) & TS.get_unrolling(0, k - 1)
+
+        if not is_unsat(forward_condition):
+            return True
+
+        if pd:
+            for o in O_prev:
+                base_case_o = get_unrolling(TS.init, 0, 0) & get_or_and(TS.trans, Not(o), k - 1)
+                if is_sat(base_case_o):
+                    return False
+                else:
+                    step_case_o_n = ...
+                    ExternalInv = get_currently_known_invariant()
+                    Inv = InternalInv & ExternalInv
+                    if is_sat(... & step_case_o_n):
+                        s_o = ...
+                        O = O.union(Not(lift(k, Inv, P, s_o)))
+                    else:
+                        InternalInv &= strengthen(k, Inv, o)
+
+        step_case_n = ...
+
+        ExternalInv = get_currently_known_invariant()
+        Inv = InternalInv & ExternalInv
+        if is_sat(... & step_case_n):
+            if pd:
+                s = ...
+                O = O.union(Not(lift(k, Inv, P, s)))
+        else:
+            return True
+        k = inc(k)
+    return Status.UNKNOWN
 
 
 def main():
