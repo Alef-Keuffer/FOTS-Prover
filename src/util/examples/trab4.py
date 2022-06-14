@@ -1,5 +1,4 @@
-from pysmt.fnode import FNode
-from pysmt.shortcuts import Symbol, And, Or, Not, BVToNatural
+from pysmt.shortcuts import Symbol, And, Or, BVToNatural
 
 from backend import TransitionSystem, next_var
 
@@ -15,7 +14,6 @@ assume m >= 0 and n >= 0 and r == 0 and x == m and y == n
 
 def trab4NoImplies(bit_count, pc_is_bv=True):
     from pysmt.typing import BVType, INT
-    from pysmt.oracles import get_logic
 
     # Variables
     x = Symbol("x", BVType(bit_count))
@@ -87,7 +85,7 @@ def trab4NoImplies(bit_count, pc_is_bv=True):
 
 
 def trab4Simplified(bit_count):
-    from pysmt.typing import BVType, INT
+    from pysmt.typing import BVType
 
     # Variables
     x = Symbol("x", BVType(bit_count))
@@ -164,7 +162,7 @@ def prog4(m, n):
 
 
 def trab4EvenMoreSimplified(bit_count):
-    from pysmt.typing import BVType, INT
+    from pysmt.typing import BVType
 
     # Variables
     x = Symbol("x", BVType(bit_count))
@@ -218,7 +216,7 @@ def trab4EvenMoreSimplified(bit_count):
 
 
 def trab4FinalSimplification(bit_count):
-    from pysmt.typing import BVType, INT
+    from pysmt.typing import BVType
 
     # Variables
     x = Symbol("x", BVType(bit_count))
@@ -258,7 +256,6 @@ def trab4FinalSimplification(bit_count):
            )
 
     init = pc.Equals(0) & pre
-    from pysmt.shortcuts import BVToNatural
     V = (y - pc) + 3
     prop_positivo = V >= 0
     prop_terminacao = (V.Equals(0).Implies(pc.Equals(3)))

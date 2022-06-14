@@ -85,16 +85,16 @@ class T:
     
     @staticmethod
     def prime(v):
-        new_name = f"{v.symbol_name()}′" if len (v.symbol_name) < 2 else f"({v.symbol_name()})′"
+        new_name = f"{v.symbol_name()}′" if len(v.symbol_name) < 2 else f"({v.symbol_name()})′"
         return Symbol(new_name, v.symbol_type())
 
-    def add_trans(self,S,NS):
+    def add_trans(self, S, NS):
         attributions = []
         for f in NS.get_atoms():
             if f.is_equals():
-                l,r = f.args()
-                l,r = (l if len(l.args()) == 0 else r, r if len(l.args()) == 0 else l)
-                r = r if l != l
-        
+                l, r = f.args()
+                l, r = (l if len(l.args()) == 0 else r, r if len(l.args()) == 0 else l)
+                r = r if l != l else ...
+
 
 print(example2())
