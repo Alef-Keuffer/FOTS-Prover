@@ -4,7 +4,6 @@ from pysmt.fnode import FNode
 from pysmt.shortcuts import Symbol, Not, And, Or, EqualsOrIff, Implies, Portfolio, binary_interpolant, BVToNatural, \
     get_model, is_valid, FALSE, get_env
 from pysmt.shortcuts import is_sat, is_unsat, Solver, TRUE
-from pprint import pprint
 
 from pysmt.solvers.msat import MSatInterpolator
 
@@ -19,7 +18,7 @@ def at_time(v, t):
     return Symbol("%s@%d" % (v.symbol_name(), t), v.symbol_type())
 
 
-def get_subs(P: FNode | Container[FNode], i: int):
+def get_subs(P: Container[FNode] | FNode, i: int):
     """
     Builds a map from :math:`x` to :math:`x_i` and from :math:`x'` to :math:`x_{i+1}`,
     for all :math:`x` in :math:`P`.
@@ -36,7 +35,7 @@ def get_subs(P: FNode | Container[FNode], i: int):
 def get_unrolling(P: FNode, k, j=0):
     """Unrolling of the property from :math:`j` to :math:`k`:
 
-    E.g. :math:`P^j ∧ P^{j+1} ∧ ⋯ ∧ P^{k-1} ∧ P^k`
+    I.e. :math:`P^j ∧ P^{j+1} ∧ ⋯ ∧ P^{k-1} ∧ P^k`
     """
     assert j <= k
     res = []
@@ -63,7 +62,7 @@ class TransitionSystem(object):
         return get_unrolling(self.trans, k, j)
 
 
-class BMCInduction(object):
+class BMCInduction:
     def __init__(self, system):
         self.system = system
 
@@ -125,7 +124,7 @@ class BMCInduction(object):
                 return
 
 
-from enum import unique, Enum, auto
+from enum import Enum, auto
 
 
 class Status(Enum):
@@ -212,12 +211,16 @@ def interpolate(A: FNode, B: FNode):
                 pass
 
 
-class IMC:
+def IMC(TS: TransitionSystem,
+        P: FNode,
+        S=None,
+        customInterpolator=False):
     """
     Interpolating Model Checking
 
     As specified at S. Fulvio Rollini, “Craig Interpolation and Proof Manipulation:
     Theory and Applications to Model Checking,” Università della Svizzera Italiana. p. 38.
+    available at http://verify.inf.usi.ch/sites/default/files/RolliniPhDThesis.pdf
 
     A property to be verified is encoded as a formula :math:`P` , so that the system is safe if the
     error states where :math:`¬P` holds are not reachable from :math:`S`.
@@ -235,68 +238,63 @@ class IMC:
     and bounded model checking (BMC), is based on iteratively building such a :math:`\\hat P`.
     """
 
-    def __init__(self, system: TransitionSystem):
-        self.system = system
+    if not S:
+        S = TS.init
 
-    def check_property(self, P: FNode, S=None, customInterpolator=False):
-        # based on Algorithm 4 from http://verify.inf.usi.ch/sites/default/files/RolliniPhDThesis.pdf at p. 38
-        if not S:
-            S = self.system.init
+    # first makes sure P is not violated by S
+    if m := get_model(S & Not(P)):
+        # halt return a counterexample
+        print(m)
+        return Status.UNSAFE1
 
-        # first makes sure P is not violated by S
-        if m := get_model(S & Not(P)):
-            # halt return a counterexample
-            print(m)
-            return Status.UNSAFE1
+    # bound
+    k = 1
 
-        # bound
-        k = 1
+    # overapproximation of states at distance at most i from S
+    i = 0
+    R_i = S.substitute(TS.get_subs(i))
 
-        # overapproximation of states at distance at most i from S
-        i = 0
-        R_i = S.substitute(self.system.get_subs(i))
-
-        # for a bound k and a current overapproximation R(i) of the states
-        # at distance at most i from S , the algorithm checks if P is violated
-        # by the states reachable from R(i) in at most k steps.
-        while True:
-            A = R_i & self.system.get_unrolling(1)
-            B = And(And(self.system.get_unrolling(1, k)), Or(get_unrolling(Not(P), k)))
-            if m := is_sat(A & B):
-                # the error might be real or spurious, caused by an insufficient value of k
-                if is_valid(R_i.EqualsOrIff(S)):
-                    # error is real so the system is unsafe
-                    print(m)
-                    return Status.UNSAFE2
-                else:
-                    # error is spurious so k is increased to allow finer overapproximations, and
-                    # the algorithm restarts from S.
-                    k += 1
-                    i = 0
-                    R_i = S.substitute(self.system.get_subs(i))
-            # R(i) ⋀_{j=0}^{k−1} T^j ⋁_{l=0}^k ¬P^l is unsat 
+    # for a bound k and a current overapproximation R(i) of the states
+    # at distance at most i from S , the algorithm checks if P is violated
+    # by the states reachable from R(i) in at most k steps.
+    while True:
+        A = R_i & TS.get_unrolling(1)
+        B = And(And(TS.get_unrolling(1, k)), Or(get_unrolling(Not(P), k)))
+        if m := is_sat(A & B):
+            # the error might be real or spurious, caused by an insufficient value of k
+            if is_valid(R_i.EqualsOrIff(S)):
+                # error is real so the system is unsafe
+                print(m)
+                return Status.UNSAFE2
             else:
-                # an interpolant I(i) is computed, which represents an approximation
-                # of the image of R(i) (i.e., of the states reachable from R(i) in one step).
-                if customInterpolator:
-                    I_i = bin_itp(A, B)
-                else:
-                    I_i = binary_interpolant(A, B)
+                # error is spurious so k is increased to allow finer overapproximations, and
+                # the algorithm restarts from S.
+                k += 1
+                i = 0
+                R_i = S.substitute(TS.get_subs(i))
+        # R(i) ⋀_{j=0}^{k−1} T^j ⋁_{l=0}^k ¬P^l is unsat 
+        else:
+            # an interpolant I(i) is computed, which represents an approximation
+            # of the image of R(i) (i.e., of the states reachable from R(i) in one step).
+            if customInterpolator:
+                I_i = bin_itp(A, B)
+            else:
+                I_i = binary_interpolant(A, B)
 
-                # a fixpoint check is carried out: if I(i) |= R(i), it means that
-                # all states have been covered, and the system is safe; otherwise,
-                # R(i + 1) is set to R(i) ∨ I(i) and the procedure continues.
-                if is_valid(I_i.Implies(R_i)):
-                    # the current R(i) corresponds to an inductive invariant P̂
-                    # stronger than P: on one side, S |= R(i), moreover R(i) ∧ T |= I'(i)
-                    # and I(i) |= R(i) imply R(i) ∧ T |= R'(i); on the other side,
-                    # the fact that at each iteration 0 ≤ h ≤ i, R(h) ∧ ⋀_{j=0}^{k−1} T |= ⋀_{l=0}^k P^l,
-                    # together with R(i) being an inductive invariant, yield R(i) |= P.
-                    print(f"Proved at step {i + 1}")
-                    return Status.SAFE
-                else:
-                    R_i = R_i | I_i
-                    i += 1
+            # a fixpoint check is carried out: if I(i) |= R(i), it means that
+            # all states have been covered, and the system is safe; otherwise,
+            # R(i + 1) is set to R(i) ∨ I(i) and the procedure continues.
+            if is_valid(I_i.Implies(R_i)):
+                # the current R(i) corresponds to an inductive invariant P̂
+                # stronger than P: on one side, S |= R(i), moreover R(i) ∧ T |= I'(i)
+                # and I(i) |= R(i) imply R(i) ∧ T |= R'(i); on the other side,
+                # the fact that at each iteration 0 ≤ h ≤ i, R(h) ∧ ⋀_{j=0}^{k−1} T |= ⋀_{l=0}^k P^l,
+                # together with R(i) being an inductive invariant, yield R(i) |= P.
+                print(f"Proved at step {i + 1}")
+                return Status.SAFE
+            else:
+                R_i = R_i | I_i
+                i += 1
 
 
 def get_or_and(T, P, k):
@@ -324,7 +322,7 @@ def _lift(k, Inv, Q, s):
     return binary_interpolant(A, B)
 
 
-def pdr(P: FNode,
+def PDR(P: FNode,
         TS: TransitionSystem,
         get_currently_known_invariant=...,
         strengthen=...,
@@ -491,22 +489,20 @@ def trab4NormalInterpolator():
     from util.examples.trab4 import trab4EvenMoreSimplified, trab4FinalSimplification, trab4NoImplies
     example = trab4NoImplies(4)
     bmcind = BMCInduction(example[0])
-    interp = IMC(example[0])
     for prop in example[1]:
         print(f"proving {prop[1]}")
         # bmcind.check_property(prop[0])
-        print(interp.check_property(prop[0]))
+        print(IMC(example[0], prop[0]))
 
 
 def trab4CustomInterpolator():
     from util.examples.trab4 import trab4EvenMoreSimplified, trab4FinalSimplification, trab4NoImplies
     example = trab4NoImplies(4, pc_is_bv=False)
     bmcind = BMCInduction(example[0])
-    interp = IMC(example[0])
     for prop in example[1]:
         print(f"proving {prop[1]}")
         # bmcind.check_property(prop[0])
-        print(interp.check_property(prop[0], customInterpolator=True))
+        print(IMC(example[0], prop[0], customInterpolator=True))
 
 
 def interp(P: FNode, Q: FNode):
