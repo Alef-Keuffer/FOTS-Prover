@@ -20,7 +20,10 @@ def at_time(v, t):
 
 
 def get_subs(P: FNode | Container[FNode], i: int):
-    """Builds a map from x to x@i and from x' to x@(i+1), for all x in P."""
+    """
+    Builds a map from :math:`x` to :math:`x_i` and from :math:`x'` to :math:`x_{i+1}`,
+    for all :math:`x` in :math:`P`.
+    """
     if isinstance(P, FNode):
         P = P.get_free_variables()
     subs_i = {}
@@ -31,9 +34,9 @@ def get_subs(P: FNode | Container[FNode], i: int):
 
 
 def get_unrolling(P: FNode, k, j=0):
-    """Unrolling of the property from j to k:
+    """Unrolling of the property from :math:`j` to :math:`k`:
 
-    E.g. P⁰ ∧ P¹ ∧ ⋯ ∧ Pᵏ⁻¹ ∧ Pᵏ
+    E.g. :math:`P^j ∧ P^{j+1} ∧ ⋯ ∧ P^{k-1} ∧ P^k`
     """
     assert j <= k
     res = []
@@ -52,14 +55,11 @@ class TransitionSystem(object):
         self.trans = trans
 
     def get_subs(self, i):
-        """Builds a map from x to x@i and from x' to x@(i+1), for all x in system."""
+        """See :func:`get_subs`"""
         return get_subs(self.variables, i)
 
     def get_unrolling(self, k, j=0):
-        """Unrolling of the transition relation from j to k:
-
-        E.g. T(j,j+1) & T(j+1,j+2) & ... & T(k-1,k)
-        """
+        """See :func:`get_unrolling`"""
         return get_unrolling(self.trans, k, j)
 
 
@@ -254,7 +254,7 @@ class IMC:
 
 def get_or_and(T, P, k):
     """
-    :return: ∨{n=0…k}. ∧{i=0…n}. T(s_i,s_{i+1}) ∧ P(s_n)
+    :return: :math:`\\displaystyle\\bigvee_{n=0}^k \\left(\\displaystyle\\bigwedge_{i=0}^n T(s_i,s_{i+1}) ∧ P(s_n)\\right)`
     """
     OR_formulas = TRUE()
     for n in range(k + 1):
@@ -283,43 +283,43 @@ def pdr(P: FNode,
         strengthen=...,
         lift=...,
         k_init: int = 1,
-        k_max: int | float('inf') = float('inf'),
+        k_max: int = float('inf'),
         pd: bool = True,
         inc: Callable[[int], int] = lambda n: n + 1,
-        ) -> bool | Status.UNKNOWN:
+        ) -> bool | Status:
     """
     Iterative-Deepening k-Induction with Property Direction
     as specified at D. Beyer and M. Dangl, “Software Verification with PDR: Implementation and Empirical Evaluation of the State of the Art,” arXiv:1908.06271 [cs], Feb. 2020, Accessed: Mar. 05, 2022. [Online]. Available: http://arxiv.org/abs/1908.06271
 
-    :param k_init: the initial value ≥1 for the bound `k`
+    :param k_init: the initial value :math:`≥1` for the bound `k`
     :param k_max: an upper limit for the bound `k`
-    :param inc: a function ℕ → ℕ with ∀n ∈ ℕ: inc(n) > n
+    :param inc: a function :math:`ℕ → ℕ` such that :math:`∀n ∈ ℕ: inc(n) > n`
     :param TS: Contains predicates defining the initial states and the transfer relation
     :param P: The safety property
     :param get_currently_known_invariant: used to obtain the strongest invariant currently
-           available via a concurrently running (external) auxiliary-invariant generator.
+        available via a concurrently running (external) auxiliary-invariant generator
     :param pd: boolean flag pd (reminding of “property-directed”) is used to control
-           whether failed induction checks are used to guide the algorithm towards
-           a sufficient strengthening of the safety property P to prove correctness;
-           if pd is set to false, the algorithm behaves exactly like standard k-induction.
-    :param lift: Given a failed attempt to prove some candidate invariant Q by induction,
-           the function lift is used to obtain from a concrete counterexample-to-induction (CTI)
-           state a set of CTI states described by a state predicate C. An implementation of the function
-           lift needs to satisfy the condition that for a CTI s ∈ S where S is the set of program states,
-           k ∈ ℕ, inv ∈ ℕ × (S → 𝔹) × (S → 𝔹) × S → (S → 𝔹) and C = lift(k, Inv , Q, s), the following holds:
+        whether failed induction checks are used to guide the algorithm towards
+        a sufficient strengthening of the safety property P to prove correctness;
+        if pd is set to false, the algorithm behaves exactly like standard k-induction.
+    :param lift: Given a failed attempt to prove some candidate invariant :math:`Q` by induction,
+        the function lift is used to obtain from a concrete counterexample-to-induction (CTI)
+        state a set of CTI states described by a state predicate C. An implementation of the function
+        :math:`k ∈ ℕ, \\Inv ∈ ℕ × (S → 𝔹) × (S → 𝔹) × S → (S → 𝔹)` and :math:`C = \\lift(k, \\Inv , Q, s)`,
+        lift needs to satisfy the condition that for a CTI :math:`s ∈ S` where :math:`S` is the set of
+        program states, the following holds:
 
-           C(s) ∧ \left( ∀s_n ∈ S: C(s_n) ⇒ Inv(s_n) ∧ ⋀_{i=n}^{n+k−1} (Q(s_i) ∧ T(s_i ,s_{i+1})) ⇒ ¬Q(s_{n+k}) \right)
+        .. math:: C(s) ∧ \\left( ∀s_n ∈ S: C(s_n) ⇒ \\Inv(s_n) ∧ ⋀_{i=n}^{n+k−1} (Q(s_i) ∧ T(s_i ,s_{i+1})) ⇒ ¬Q(s_{n+k}) \\right)
 
-           which means that the CTI s must be an element of the set of states described by the resulting predicate
-           C and that all states in this set must be CTIs, i.e., they need to be k-predecessors of ¬Q-states,
-           or in other words, each state in the set of states described by the predicate C must reach some
-           ¬Q-state via k unrollings of the transition relation T.
-    :param strengthen: The function strengthen: ℕ × (S → 𝔹) × (S → 𝔹) → (S → 𝔹)
-           is used to obtain for a k-inductive invariant a stronger k-inductive invariant, i.e.,
-           its result needs to imply the input invariant, and, just like the input invariant,
-           it must not be violated within k loop iterations and must be k-inductive.
-
-    :return: `True` if `P` holds, `Status.UNKNOWN` if k > k_max , `False` otherwise
+        which means that the CTI s must be an element of the set of states described by the resulting predicate
+        C and that all states in this set must be CTIs, i.e., they need to be k-predecessors of :math:`¬Q`-states,
+        or in other words, each state in the set of states described by the predicate :math:`C` must reach some
+        :math:`¬Q`-state via :math:`k` unrollings of the transition relation :math:`T`.
+    :param strengthen: The function strengthen: :math:`ℕ × (S → 𝔹) × (S → 𝔹) → (S → 𝔹)`
+        is used to obtain for a k-inductive invariant a stronger k-inductive invariant, i.e.,
+        its result needs to imply the input invariant, and, just like the input invariant,
+        it must not be violated within k loop iterations and must be k-inductive.
+    :return: `True` if `P` holds, `Status.UNKNOWN` if `k > k_max` , `False` otherwise
     """
 
     # current bound

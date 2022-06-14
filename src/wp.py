@@ -18,13 +18,15 @@ def prev_name(s: str):
 
 
 def wp(ns, pos):
-    """Based on https://www.cs.williams.edu/~freund/cs326/ReasoningPart1.html
+    """
+    Based on https://www.cs.williams.edu/~freund/cs326/ReasoningPart1.html
 
     We usually want to use the precondition that guarantees correctness for the broadest set of inputs.
     Stated differently, we want the weakest precondition: the most general precondition needed to establish
     the postcondition. The terms “weak” and “strong” refer to how general or specific an assertion is.
     The weaker an assertion is, the more general it is; the stronger it is, the more specific it is.
-    We write P = wp(S,Q) to indicate that P is the weakest precondition for statement S and postcondition Q."""
+    We write P = wp(S,Q) to indicate that P is the weakest precondition for statement S and postcondition Q.
+    """
     wp = pos
     nextD = {}
     for phi in ns.get_atoms():
@@ -57,20 +59,19 @@ def example1():
     """
     example:
     get
-        nS: x = x + 1;
-        pos: { x > 0 }
+    nS: x = x + 1;
+    pos: { x > 0 }
     return
-        wp: { x + 1 > 0 }
+    wp: { x + 1 > 0 }
     { x + 1 > 0 } = wp({ x > 0 },⟦x = x + 1⟧) -> { x > 0 }[x+1/x]
     """
-
     x = Symbol("x", INT)
     pos = x > 0
     return pos.substitute({x: x + 1})
 
 
 def example2():
-    from wd.trabalho4 import next_var
+    from backend import next_var
     # x = x + 1 ; assert x > 0
     x = Symbol("x", INT)
     nx = next_var(x)
