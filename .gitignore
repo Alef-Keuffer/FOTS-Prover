@@ -9,6 +9,7 @@ venv
 # Sphinx
 docs
 docs2
+FOTS-Prover.docs
 source
 Makefile
 make.bat

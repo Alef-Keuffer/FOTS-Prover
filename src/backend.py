@@ -213,38 +213,85 @@ def interpolate(A: FNode, B: FNode):
 
 
 class IMC:
-    """Interpolating Model Checking"""
+    """
+    Interpolating Model Checking
+
+    As specified at S. Fulvio Rollini, “Craig Interpolation and Proof Manipulation:
+    Theory and Applications to Model Checking,” Università della Svizzera Italiana. p. 38.
+
+    A property to be verified is encoded as a formula :math:`P` , so that the system is safe if the
+    error states where :math:`¬P` holds are not reachable from :math:`S`.
+
+    Verifying that the system satisfies :math:`P` reduces to prove
+    that :math:`P` is an inductive invariant property:
+
+    .. math:: S ⊨ P\\qquad P ∧ T ⊨ P'
+
+    If (i) the initial states satisfy :math:`P` and, (ii) assuming :math:`P` holds, it also holds after
+    applying the transition relation, then :math:`P` holds in all reachable states. When the
+    inductiveness of :math:`P` cannot be directly proved, it might be possible to show that another
+    formula :math:`\\hat P`, stronger than :math:`P ( \\hat P |= P )`, is an inductive invariant,
+    from which :math:`P` would follow as a consequence; this algorithm, which combines interpolation
+    and bounded model checking (BMC), is based on iteratively building such a :math:`\\hat P`.
+    """
 
     def __init__(self, system: TransitionSystem):
         self.system = system
 
     def check_property(self, P: FNode, S=None, customInterpolator=False):
-        # based on Algorithm 4 from http://verify.inf.usi.ch/sites/default/files/RolliniPhDThesis.pdf
+        # based on Algorithm 4 from http://verify.inf.usi.ch/sites/default/files/RolliniPhDThesis.pdf at p. 38
         if not S:
             S = self.system.init
+
+        # first makes sure P is not violated by S
         if m := get_model(S & Not(P)):
+            # halt return a counterexample
             print(m)
             return Status.UNSAFE1
+
+        # bound
         k = 1
+
+        # overapproximation of states at distance at most i from S
         i = 0
         R_i = S.substitute(self.system.get_subs(i))
+
+        # for a bound k and a current overapproximation R(i) of the states
+        # at distance at most i from S , the algorithm checks if P is violated
+        # by the states reachable from R(i) in at most k steps.
         while True:
             A = R_i & self.system.get_unrolling(1)
             B = And(And(self.system.get_unrolling(1, k)), Or(get_unrolling(Not(P), k)))
             if m := is_sat(A & B):
+                # the error might be real or spurious, caused by an insufficient value of k
                 if is_valid(R_i.EqualsOrIff(S)):
+                    # error is real so the system is unsafe
                     print(m)
                     return Status.UNSAFE2
                 else:
+                    # error is spurious so k is increased to allow finer overapproximations, and
+                    # the algorithm restarts from S.
                     k += 1
                     i = 0
                     R_i = S.substitute(self.system.get_subs(i))
+            # R(i) ⋀_{j=0}^{k−1} T^j ⋁_{l=0}^k ¬P^l is unsat 
             else:
+                # an interpolant I(i) is computed, which represents an approximation
+                # of the image of R(i) (i.e., of the states reachable from R(i) in one step).
                 if customInterpolator:
                     I_i = bin_itp(A, B)
                 else:
                     I_i = binary_interpolant(A, B)
+
+                # a fixpoint check is carried out: if I(i) |= R(i), it means that
+                # all states have been covered, and the system is safe; otherwise,
+                # R(i + 1) is set to R(i) ∨ I(i) and the procedure continues.
                 if is_valid(I_i.Implies(R_i)):
+                    # the current R(i) corresponds to an inductive invariant P̂
+                    # stronger than P: on one side, S |= R(i), moreover R(i) ∧ T |= I'(i)
+                    # and I(i) |= R(i) imply R(i) ∧ T |= R'(i); on the other side,
+                    # the fact that at each iteration 0 ≤ h ≤ i, R(h) ∧ ⋀_{j=0}^{k−1} T |= ⋀_{l=0}^k P^l,
+                    # together with R(i) being an inductive invariant, yield R(i) |= P.
                     print(f"Proved at step {i + 1}")
                     return Status.SAFE
                 else:
