@@ -263,6 +263,15 @@ def get_or_and(T, P, k):
 
 
 def _lift(k, Inv, Q, s):
+    """
+    We can implement lift using Craig interpolation
+    between
+    A: s = s_n and
+    B: Inv (sn) ⋀_{i=n}^{n+k-1}( Q(s_i) ∧ T(s_i, s_{i+1}) ) ⇒ ¬Q(sn+k)
+    because s is a CTI, and therefore we know that A ⇒ B holds.
+    Hence, the resulting interpolant satisfies the criteria for C to
+    be a valid lifting of s according to the requirements towards the function lift.
+    """
     A = s == ...
     B = ...
     return binary_interpolant(A, B)
@@ -287,12 +296,28 @@ def pdr(P: FNode,
     :param inc: a function ℕ → ℕ with ∀n ∈ ℕ: inc(n) > n
     :param TS: Contains predicates defining the initial states and the transfer relation
     :param P: The safety property
-    :param get_currently_known_invariant: used to obtain auxiliary invariants
-    :param pd: a boolean that enables or disables property direction
-    :param lift: ℕ × (S → 𝔹) × (S → 𝔹) × S → (S → 𝔹)
-                 where S is the set of program states.
-    :param strengthen: ℕ × (S → 𝔹) × (S → 𝔹) → (S → 𝔹)
-                       where S is the set of program states.
+    :param get_currently_known_invariant: used to obtain the strongest invariant currently
+           available via a concurrently running (external) auxiliary-invariant generator.
+    :param pd: boolean flag pd (reminding of “property-directed”) is used to control
+           whether failed induction checks are used to guide the algorithm towards
+           a sufficient strengthening of the safety property P to prove correctness;
+           if pd is set to false, the algorithm behaves exactly like standard k-induction.
+    :param lift: Given a failed attempt to prove some candidate invariant Q by induction,
+           the function lift is used to obtain from a concrete counterexample-to-induction (CTI)
+           state a set of CTI states described by a state predicate C. An implementation of the function
+           lift needs to satisfy the condition that for a CTI s ∈ S where S is the set of program states,
+           k ∈ ℕ, inv ∈ ℕ × (S → 𝔹) × (S → 𝔹) × S → (S → 𝔹) and C = lift(k, Inv , Q, s), the following holds:
+
+           C(s) ∧ \left( ∀s_n ∈ S: C(s_n) ⇒ Inv(s_n) ∧ ⋀_{i=n}^{n+k−1} (Q(s_i) ∧ T(s_i ,s_{i+1})) ⇒ ¬Q(s_{n+k}) \right)
+
+           which means that the CTI s must be an element of the set of states described by the resulting predicate
+           C and that all states in this set must be CTIs, i.e., they need to be k-predecessors of ¬Q-states,
+           or in other words, each state in the set of states described by the predicate C must reach some
+           ¬Q-state via k unrollings of the transition relation T.
+    :param strengthen: The function strengthen: ℕ × (S → 𝔹) × (S → 𝔹) → (S → 𝔹)
+           is used to obtain for a k-inductive invariant a stronger k-inductive invariant, i.e.,
+           its result needs to imply the input invariant, and, just like the input invariant,
+           it must not be violated within k loop iterations and must be k-inductive.
 
     :return: `True` if `P` holds, `Status.UNKNOWN` if k > k_max , `False` otherwise
     """
@@ -300,7 +325,7 @@ def pdr(P: FNode,
     # current bound
     k = k_init
 
-    # the invariant computed by this algorithm internally, and
+    # the invariant computed by this algorithm internally
     InternalInv = True
 
     # the set of current proof obligations.
@@ -310,22 +335,65 @@ def pdr(P: FNode,
         O_prev = O
         O = set()
 
+        # begin: base-case check (BMC)
+        #
+        # Base Case. The base case of k -induction consists of running BMC with the
+        # current bound k. 4 This means that starting from all initial program states, all
+        # states of the program reachable within at most k −1 unwindings of the transition
+        # relation are explored. If a ¬P -state is found, the algorithm terminates.
         base_case = get_unrolling(TS.init, 0, 0) & get_or_and(TS.trans, Not(P), k - 1)
-
         if is_sat(base_case):
             return False
+        # end ################################################################
 
+        # begin: forward-condition check (as described in Sec. 2)
+        #
+        # Forward Condition. If no ¬P-state is found by the BMC in the base case, the
+        # algorithm continues by performing the forward-condition check, which attempts
+        # to prove that BMC fully explored the state space of the program by checking
+        # that no state with distance k′ > k−1 to the initial state is reachable. If this
+        # check is successful, the algorithm terminates.
         forward_condition = get_unrolling(TS.init, 0, 0) & TS.get_unrolling(0, k - 1)
-
         if not is_unsat(forward_condition):
             return True
+        # end ################################################################
 
+        # begin: attempt to prove each proof obligation using k-induction
         if pd:
             for o in O_prev:
+                # begin: check the base case for a proof obligation o
                 base_case_o = get_unrolling(TS.init, 0, 0) & get_or_and(TS.trans, Not(o), k - 1)
                 if is_sat(base_case_o):
+                    # If any violations of the proof obligation o are found,
+                    # this means that a predecessor state of a ¬P-state,
+                    # and thus, transitively, a ¬P -state, is reachable, so we return false.
                     return False
+                # end ################################################################
+
                 else:
+                    # no violation was found
+
+                    # begin: check the inductive-step case to prove o
+                    #
+                    # Inductive-Step Case. The forward-condition check, however, can only prove
+                    # safety for programs with finite (and, in practice, short) loops. To prove safety
+                    # beyond the bound k, the algorithm applies induction: The inductive-step case
+                    # attempts to prove that after every sequence of k unrollings of the transition
+                    # relation that did not reach a ¬P-state, there can also be no subsequent transition
+                    # into a ¬P-state by unwinding the transition relation once more. In the realm
+                    # of model checking of software, however, the safety property P is often not
+                    # directly k-inductive for any value of k, thus causing the inductive-step-case check
+                    # to fail. It is therefore state-of-the-art practice to add auxiliary invariants to this
+                    # check to further strengthen the induction hypothesis and make it more likely
+                    # to succeed. Thus, the inductive-step case proves a program safe if the following
+                    # condition is unsatisfiable:
+                    #
+                    #           Inv(s_n) ⋀_{i=n}^{n+k-1}(P(s_i) ∧ T(s_i,s_{i+1})) ∧ ¬P(s_{n+k})
+                    #
+                    # where Inv is an auxiliary invariant, and sₙ,…,sₙ₊ₖ is any sequence of states. If
+                    # this check fails, the induction attempt is inconclusive, and the program is neither
+                    # proved safe nor unsafe yet with the current value of k and the given auxiliary
+                    # invariant. In this case, the algorithm increases the value of k and starts over.
                     step_case_o_n = ...
                     ExternalInv = get_currently_known_invariant()
                     Inv = InternalInv & ExternalInv
@@ -333,8 +401,25 @@ def pdr(P: FNode,
                         s_o = ...
                         O = O.union(Not(lift(k, Inv, P, s_o)))
                     else:
-                        InternalInv &= strengthen(k, Inv, o)
+                        # if the step-case check for o is successful,
+                        # we no longer track o in the set O of unproven proof obligations
 
+                        # We could now directly use the proof obligation as an invariant,
+                        # but instead, we first try to strengthen it into a stronger invariant
+                        # that removes even more unreachable states from future consideration before
+                        # conjoining it to our internally computed auxiliary invariant. In our
+                        # implementation, we implement strengthen by attempting to drop components
+                        # from a (disjunctive) invariant and checking if the remaining clause is
+                        # still inductive.
+                        InternalInv &= strengthen(k, Inv, o)
+                    # end ################################################################
+        # end: attempt to prove each proof obligation using k-induction
+
+        # begin: check the inductive-step case for the safety property P
+        #
+        # This check is mostly analogous to the inductive-step case check for
+        # the proof obligations described above, except that if the check is successful, we
+        # immediately return true.
         step_case_n = ...
 
         ExternalInv = get_currently_known_invariant()
@@ -345,6 +430,8 @@ def pdr(P: FNode,
                 O = O.union(Not(lift(k, Inv, P, s)))
         else:
             return True
+        # end ################################################################
+
         k = inc(k)
     return Status.UNKNOWN
 
