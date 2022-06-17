@@ -21,12 +21,12 @@ class Status(Enum):
 
 def next_var(v):
     """Returns the 'next' of the given variable"""
-    return Symbol("next(%s)" % v.symbol_name(), v.symbol_type())
+    return Symbol(f"next({v.symbol_name()})", v.symbol_type())
 
 
 def at_time(v, t):
     """Builds an SMT variable representing v at time t"""
-    return Symbol("%s@%d" % (v.symbol_name(), t), v.symbol_type())
+    return Symbol(f"{v.symbol_name()}@{t}", v.symbol_type())
 
 
 def get_subs(P: Container[FNode] | FNode, i: int):
