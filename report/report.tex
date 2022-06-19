@@ -82,9 +82,12 @@
 % comando '\def' usado para definir abreviatura (macros)
 % o primeiro argumento é o nome do novo comando e o segundo entre chavetas é o texto original, ou sequência de controle, para que expande
 \def\proj{\emph{Projeto}\xspace}
-\def\pdr{Property Directed Reachability\xspace}
-\def\bmc{Bounded Model-Checking\xspace}
-\def\imc{Interpolant-Based Model-Checking\xspace}
+\def\pdr{"\textit{Property Directed Reachability}"\xspace}
+\def\bmc{"\textit{Bounded Model-Checking}"\xspace}
+\def\imc{"\textit{Interpolant-Based Model-Checking}\xspace}
+\def\fots{"\textit{First-Order Transition Systems}"\xspace}
+\def\pysmt{\textbf{PySMT}}
+\def\pysmtlink{\footnote{Documentação disponível em \url{https://pysmt.readthedocs.io/en/latest/}}}
 \def\kind{``\textit{$k$-induction}''\xspace}
 \def\titulo#1{\section{#1}}    %no corpo do documento usa-se na forma '\titulo{MEU TITULO}'
 \def\area#1{{\em \'{A}rea: #1}\\[0.2cm]}
@@ -109,7 +112,12 @@ e animação de sistemas de transição de 1º ordem (FOTS)
 \maketitle % apresentar titulo, autor e data
 
 \begin{abstract}  % resumo do documento
-Neste relatório explicar-se-á ...
+Neste relatório apresenta-se o trabalho realizado para a UC de Projeto, que
+consistiu no desenvolvimento, em Python\footnote{\url{https://www.python.org/}}, de uma ferramente genérica de verificação de
+propriedades de \fots através de uma biblioteca-interface para SMT-LIB.
+
+Para a verificação de correção de propriedades de segurança e animação de FOTS,
+foram analisados os seguintes métodos: \bmc, \kind, \pdr, \imc.
 \end{abstract}
 
 \tableofcontents % Insere a tabela de indice
@@ -128,21 +136,40 @@ A estrutura do relatório é a seguinte:
 \item No capítulo~\ref{chap:state_of_the_art} faz-se uma análise do trabalho
   já existente na área, e das referência usadas para o projeto.
 
-\item No capítulo~\ref{chap:analysis} explicam-se alguns aspetos mais técnicos e concretos da implementação.
+\item No capítulo~\ref{chap:analysis} explicam-se alguns aspetos mais técnicos e concretos
+da implementação, assim como decisões tomadas e alternativas consideradas.
 
 \item No capítulo~\ref{chap:case_study} apresenta-se um case de estudo com um FOTS que servirá para
 apresentação das funcionalidades desenvolvidas.
 
 \item No capítulo~\ref{chap:concl} termina-se o relatório com as conclusões e o trabalho futuro.
+
+\item Nos anexos~\ref{apndx:samples} e~\ref{apndx:github} , encontra-se informação relativa ao código
+Python desenvolvido, assim como o repositório GitHub que o contém.
+
 \end{itemize}
 
 \section{Problema em análise}
+
+Para implementar este projeto, utilizou-se a biblioteca \pysmt \pysmtlink.
 
 \section{Resolução e Estratégias adotadas}
 
 \section{Agradecimentos}
 
 \chapter{Estado de arte} \label{chap:state_of_the_art} %referência cruzada
+
+\section*{\kind e \bmc}
+
+Explorar: \cite{bmc} \cite{kind}.
+
+\section*{\imc}
+
+Explorar: \cite{interpolation1} \cite{interpolation2} \cite{ctigar}.
+
+\section*{\pdr}
+
+Explorar: \cite{pdrverification} \cite{pdr1} \cite{pdr2}.
 
 \chapter{Análise do trabalho} \label{chap:analysis}
 
@@ -157,6 +184,8 @@ apresentação das funcionalidades desenvolvidas.
 
 \chapter{Caso de Estudo}\label{chap:case_study}
 
+
+
 \chapter{Conclusão} \label{chap:concl}
 
 Conclui-se desta forma a apresentação do trabalho desenvolvido pelos autores
@@ -167,9 +196,13 @@ para a UC \proj no ano letivo 2021/2022.
 \section{Trabalho Futuro}
 
 \appendix % apendice
-\chapter{Excertos de Código Utilizado no Projeto}
+\chapter{Excertos de Código Utilizado no Projeto} \label{apndx:samples}
 
-\chapter{Referência para repositório \textit{GitHub} com código fonte}
+\chapter{Repositório \textit{GitHub} com código fonte e documentação} \label{apndx:github}
+
+Link para código fonte: \url{https://github.com/Alef-Keuffer/FOTS-Prover}.
+
+Link para documentação: \url{https://alef-keuffer.github.io/FOTS-Prover.docs/backend.html}.
 
 \newpage
 
@@ -180,6 +213,6 @@ para a UC \proj no ano letivo 2021/2022.
 %\bibliographystyle{apalike} % (Araujo, 2018) apelido e data da publicação
                              % --para usar este estilo descomente no inicio o comando \usepackage{apalike}
 
-\bibliography{bibLayout} %input do ficheiro de referencias bibliograficas
+\bibliography{citations} %input do ficheiro de referencias bibliograficas
 
 \end{document}
