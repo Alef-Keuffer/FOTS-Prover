@@ -19,12 +19,12 @@ class Status(Enum):
     UNKNOWN = auto()
 
 
-def next_var(v):
+def next_var(v: FNode):
     """Returns the 'next' of the given variable"""
     return Symbol(f"next({v.symbol_name()})", v.symbol_type())
 
 
-def at_time(v, t):
+def at_time(v: FNode, t):
     """Builds an SMT variable representing v at time t"""
     return Symbol(f"{v.symbol_name()}@{t}", v.symbol_type())
 
@@ -43,7 +43,7 @@ def get_subs(P: Container[FNode] | FNode, i: int):
     return subs_i
 
 
-def get_unrolling(P: FNode, k, j=0):
+def get_unrolling(P: FNode, k: int, j: int = 0):
     """Unrolling of the property from :math:`j` to :math:`k`:
 
     I.e. :math:`P^j ∧ P^{j+1} ∧ ⋯ ∧ P^{k-1} ∧ P^k`
