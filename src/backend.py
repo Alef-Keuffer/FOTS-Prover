@@ -60,7 +60,8 @@ class TransitionSystem(object):
     """Trivial representation of a FOTS (First Order Transition System)."""
 
     def __init__(self, init: FNode, trans: FNode):
-        self.variables: list[FNode] = list(set(init.get_free_variables()).union((trans.get_free_variables())))
+        self.variables: list[FNode] = list(
+            set(init.get_free_variables()).union((trans.get_free_variables())))
         self.init = init
         self.trans = trans
 
@@ -170,8 +171,9 @@ def itp(formulas):
                 res = mathsat.msat_solve(env)
                 if res == mathsat.MSAT_UNKNOWN:
                     from pysmt.exceptions import InternalSolverError
-                    raise InternalSolverError("Error in mathsat interpolation: %s" %
-                                              mathsat.msat_last_error_message(env))
+                    raise InternalSolverError(
+                        f"Error in mathsat interpolation: "
+                        f"{mathsat.msat_last_error_message(env)}")
 
                 if res == mathsat.MSAT_SAT:
                     return None
@@ -190,7 +192,10 @@ def itp(formulas):
                     mathsat.msat_destroy_env(env)
 
     from pysmt.oracles import get_logic
-    return CustomMSatInterpolator(get_env(), logic=get_logic(And(formulas))).sequence_interpolant(formulas)
+    return CustomMSatInterpolator(
+        get_env(),
+        logic=get_logic(And(formulas))
+    ).sequence_interpolant(formulas)
 
 
 def bin_itp(a, b):
@@ -367,7 +372,7 @@ def pdr_pseudo():
             # strengthen frames F(1) , . . . , F(i+1) by adding c.
             ...
         else:
-            # attempt failed
+            # attempt failed so
             # failed consecution query reveals
             # a predecessor t of s.
             if i == 0 and is_sat(t & I):
