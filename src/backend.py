@@ -293,10 +293,17 @@ def get_or_and(T, P, k):
     return OR_formulas
 
 
-def get_step_case(k: int, P: FNode, T: FNode):
+def get_step_case(k: int, T: FNode, P: FNode):
     """
     We assume this means that the forumla returned is an assertion over any k sequenece
     of states.
+
+    :return: :math:`\\displaystyle\\bigvee_{i=n}^{n+k-1}\
+        \\left(\
+            P(i) ∧ T(i,i+1)\
+        \\right)\
+        ∧ ¬P(n)`
+        with the idea that making :math:`n=0` in pySMT is equivalent to the formula above.
     """
     return get_unrolling(P, k - 1) & get_unrolling(T, k - 1) & Not(get_unrolling(P, k, k)) 
 
@@ -408,10 +415,7 @@ def PDR(P: FNode,
         if pd:
             for o in O_prev:
                 # begin: check the base case for a proof obligation o
-                base_case_o = get_unrolling(I, 0, 0) & \
-                              Or([get_unrolling(T, n) &
-                                  Not(get_unrolling(o, n, n))
-                                  for n in range(k)])
+                base_case_o = get_base_case(k, I, T, o)
                 if is_sat(base_case_o):
                     # If any violations of the proof obligation o are found, this means
                     # that a predecessor state of a ¬P-state, and thus, transitively,
@@ -449,11 +453,7 @@ def PDR(P: FNode,
                     # yet with the current value of k and the given auxiliary
                     # invariant. In this case, the algorithm increases the value of k
                     # and starts over.
-                    step_case_o_n = \
-                        And([get_unrolling(o, i, i) &\
-                             get_unrolling(T, i, i)
-                             for i in range(k)]) &\
-                        Not(get_unrolling(o, k, k))
+                    step_case_o_n = get_step_case(k, T, o)
                     ExternalInv = get_currently_known_invariant()
                     Inv = InternalInv & ExternalInv
                     if m := get_model(get_unrolling(Inv, 0, 0) & step_case_o_n):
