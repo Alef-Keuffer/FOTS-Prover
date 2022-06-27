@@ -241,6 +241,11 @@ def IMC(P: FNode,
 # PDR
 
 def get_assignment_as_formula_from_model(M: Model):
+    """
+    :return: :math:`\\displaystyle\\bigwedge_{x ∈ \\operatorname{vars}(M)}\\left(\
+        x ≡ ⟦x⟧_M
+        \\right)`
+    """
     if not M:
         return None
     return And([EqualsOrIff(x, v) for x, v in M])
