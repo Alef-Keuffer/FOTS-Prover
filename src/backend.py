@@ -358,7 +358,7 @@ def PDR(P: FNode,
 
         .. math:: C(s) ∧ \\left( ∀s_n ∈ S: C(s_n) ⇒\
             \\Inv(s_n) ∧
-            ⋀_{i=n}^{n+k−1} (Q(s_i) ∧ T(s_i ,s_{i+1})) ⇒ ¬Q(s_{n+k}) \\right)
+            \\displaystyle\\bigwedge_{i=n}^{n+k−1} (Q(s_i) ∧ T(s_i ,s_{i+1})) ⇒ ¬Q(s_{n+k}) \\right)
 
         which means that the CTI s must be an element of the set of states described by
         the resulting predicate C and that all states in this set must be CTIs, i.e.,
@@ -469,8 +469,8 @@ def PDR(P: FNode,
                         if predicate_describing_set_of_CTI_states:
                             O = O.union(Not(predicate_describing_set_of_CTI_states))
                     else:
-                        # if the step-case check for o is successful,
-                        # we no longer track o in the set O of unproven proof obligations
+                        # If the step-case check for o is successful,
+                        # we no longer track o in the set O of unproven proof obligations.
 
                         # We could now directly use the proof obligation as an
                         # invariant, but instead, we first try to strengthen it into a
