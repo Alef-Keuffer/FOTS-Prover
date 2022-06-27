@@ -281,7 +281,11 @@ def _lift(k, Inv, Q, s, T):
          get_unrolling(Q, k - 1) &
          get_unrolling(T, k - 1)
          ).Implies(Not(get_unrolling(Q, k, k)))
-    return binary_interpolant(A, B)
+    from pysmt.exceptions import NoSolverAvailableError
+    try:
+        return binary_interpolant(A, B)
+    except NoSolverAvailableError:
+        return None
 
 
 def get_base_case(k, I, T, P):
