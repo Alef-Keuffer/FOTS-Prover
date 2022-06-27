@@ -29,7 +29,7 @@ def next_var(v: FNode):
 
 def at_time(v: FNode, t):
     """Builds an SMT variable representing v at time t"""
-    return Symbol(f"{v.symbol_name()}@{t}", v.symbol_type())
+    return Symbol(f"[{t}]{v.symbol_name()}", v.symbol_type())
 
 
 def is_next(v: FNode):
