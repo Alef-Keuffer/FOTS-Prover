@@ -202,7 +202,7 @@ def IMC(P: FNode,
     while True:
         A = R_i & TS.get_unrolling(1)
         B = And(And(TS.get_unrolling(1, k)), Or(get_unrolling(Not(P), k)))
-        if m := is_sat(A & B):
+        if m := get_model(A & B):
             # the error might be real or spurious, caused by an insufficient value of k
             if is_valid(EqualsOrIff(R_i, S)):
                 # error is real so the system is unsafe
