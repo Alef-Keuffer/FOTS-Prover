@@ -38,6 +38,24 @@ def is_next(v: FNode):
     return 'next(' in s
 
 
+def get_name(s: FNode):
+    import re
+    return re.search(r'](.*)', s.symbol_name()).group(1)
+
+
+def str_model(m: Model):
+    d = {}
+    s = []
+    i = 0
+    for x, v in sorted(m, key=lambda t: t[0].symbol_name()):
+        n = get_name(x)
+        s.append(f"{'*' * int(x.symbol_name()[1] != '0' and d[n] != v)}{x} := {v}")
+        d[n] = v
+
+    return '\n'.join(s)
+    # return '\n'.join(f"{x} := {v}" for x, v in sorted(m, key=lambda t: t[0].symbol_name()))
+
+
 def get_subs(P: Container[FNode] | FNode, i: int):
     """
     Builds a map from :math:`x` to :math:`x_i` and from :math:`x'` to :math:`x_{i+1}`,
