@@ -153,7 +153,7 @@ class BMCInduction:
 def IMC(P: FNode,
         TS: TransitionSystem,
         S=None,
-        customInterpolator=False,
+        interpolator=binary_interpolant,
         print_info=True):
     """
     Interpolating Model Checking
@@ -217,10 +217,7 @@ def IMC(P: FNode,
         else:
             # an interpolant I(i) is computed, which represents an approximation of the
             # image of R(i) (i.e., of the states reachable from R(i) in one step).
-            if customInterpolator:
-                I_i = bin_itp(A, B)
-            else:
-                I_i = binary_interpolant(A, B)
+            I_i = interpolator(A, B)
 
             # a fixpoint check is carried out: if I(i) |= R(i), it means that all
             # states have been covered, and the system is safe; otherwise, R(i + 1) is
