@@ -281,16 +281,18 @@ def _lift(k, Inv, Q, s, T):
     return binary_interpolant(A, B)
 
 
-def get_or_and(T, P, k):
+def get_base_case(k, I, T, P):
     """
-    :return: :math:`\\displaystyle\\bigvee_{n=0}^{k-1}\\left(\\displaystyle\
-        \\bigwedge_{i=0}^{n-1} T(s_i,s_{i+1}) ∧ P(s_n)\
+    :return: :math:`I(0) ∧ \\displaystyle\\bigvee_{n=0}^{k-1}\\left(\\displaystyle\
+        \\bigwedge_{i=0}^{n-1} T(i,i+1) ∧ ¬P(n)\
         \\right)`
     """
-    OR_formulas = TRUE()
-    for n in range(k):
-        OR_formulas |= (get_unrolling(T, n) & get_unrolling(P, n, n))
-    return OR_formulas
+    return (
+        get_unrolling(I, 0, 0) &
+        Or([get_unrolling(T, n) &
+            Not(get_unrolling(P, n, n))
+            for n in range(k)])
+    )
 
 
 def get_step_case(k: int, T: FNode, P: FNode):
@@ -387,9 +389,7 @@ def PDR(P: FNode,
         # current bound k. This means that starting from all initial program states, all
         # states of the program reachable within at most k−1 unwindings of the transition
         # relation are explored. If a ¬P-state is found, the algorithm terminates.
-        base_case =\
-            get_unrolling(I, 0, 0) &\
-            Or([get_unrolling(T, n) & Not(get_unrolling(P, n, n)) for n in range(k)])
+        base_case = get_base_case(k, I, T, P)
         if m := get_model(base_case):
             if print_info:
                 print(f"[{k=}] base-case check failed")
