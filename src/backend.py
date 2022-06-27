@@ -204,7 +204,10 @@ def IMC(P: FNode,
     # first makes sure P is not violated by S
     if m := get_model(S & Not(P)):
         # halt return a counterexample
-        print(m)
+        if print_info:
+            print(f"[step 0] Initial state violates property:")
+            print(f"{INDENT}Counterexample:")
+            print(textwrap.indent(f"{m}", INDENT))
         return Status.UNSAFE1
 
     # bound
@@ -247,7 +250,9 @@ def IMC(P: FNode,
                 # |= R(i) imply R(i) ∧ T |= R'(i); on the other side, the fact that at
                 # each iteration 0 ≤ h ≤ i, R(h) ∧ ⋀_{j=0}^{k−1} T |= ⋀_{l=0}^k P^l,
                 # together with R(i) being an inductive invariant, yield R(i) |= P.
-                print(f"Proved at step {i + 1}")
+                if print_info:
+                    print(f"[step {i}] Proved safety: all states have been covered, "
+                          f"and the system is safe")
                 return Status.SAFE
             else:
                 R_i = R_i | I_i
@@ -332,7 +337,11 @@ def get_step_case(k: int, T: FNode, P: FNode):
         ∧ ¬P(n)`
         with the idea that making :math:`n=0` in pySMT is equivalent to the formula above.
     """
-    return get_unrolling(P, k - 1) & get_unrolling(T, k - 1) & Not(get_unrolling(P, k, k)) 
+    return (
+        get_unrolling(P, k - 1) &
+        get_unrolling(T, k - 1) &
+        Not(get_unrolling(P, k, k))
+    )
 
 
 def PDR(P: FNode,
@@ -419,6 +428,7 @@ def PDR(P: FNode,
             if print_info:
                 print(f"[{k=}] base-case check failed")
                 print(f"{INDENT}Counterexample:")
+                # print(textwrap.indent(f"{str_model(m)}", INDENT))
                 print(textwrap.indent(f"{m}", INDENT))
             return False
         # end ############################################################################
@@ -537,15 +547,15 @@ def PDR(P: FNode,
 
 
 def test_pdr_on_trab_4():
-    from util.examples.trab4 import trab4NoImplies
-    example = trab4NoImplies(4)
+    from util.examples.trab4 import trab4NoImplies, trab4FinalSimplification, trab4PDR
+    example = trab4PDR(4)
 
     def get_currently_know_invariant(): return True
 
     for prop in example[1]:
         pprint(f"proving {prop[1]} ({prop[0].serialize()})")
         # bmcind.check_property(prop[0])
-        print(PDR(prop[0], example[0]),'\n')
+        print(PDR(prop[0], example[0], inc=lambda n: n+3),'\n')
 
 
 if __name__ == "__main__":

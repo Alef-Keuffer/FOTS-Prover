@@ -4,6 +4,14 @@ from pysmt.shortcuts import *
 from backend import BMCInduction, IMC, itp, interp
 
 
+def trab4FinalSimplificationIMC():
+    from util.examples.trab4 import trab4EvenMoreSimplified, trab4FinalSimplification, trab4NoImplies
+    example = trab4FinalSimplification(4)
+    for prop in example[1]:
+        print(f"proving {prop[1]}")
+        print(IMC(prop[0], example[0]))
+
+
 def trab4NormalInterpolator():
     from util.examples.trab4 import trab4EvenMoreSimplified, trab4FinalSimplification, trab4NoImplies
     example = trab4NoImplies(4)
@@ -11,7 +19,7 @@ def trab4NormalInterpolator():
     for prop in example[1]:
         print(f"proving {prop[1]}")
         # bmcind.check_property(prop[0])
-        print(IMC(example[0], prop[0]))
+        print(IMC(prop[0], example[0]))
 
 
 def trab4CustomInterpolator():
@@ -21,7 +29,7 @@ def trab4CustomInterpolator():
     for prop in example[1]:
         print(f"proving {prop[1]}")
         # bmcind.check_property(prop[0])
-        print(IMC(example[0], prop[0], customInterpolator=True))
+        print(IMC(prop[0], example[0], customInterpolator=True))
 
 
 
