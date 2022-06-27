@@ -179,6 +179,7 @@ def IMC(P: FNode,
     model checking (BMC), is based on iteratively building such a :math:`\\hat P`.
     """
 
+    #: S denotes the set of initial states
     if not S:
         S = TS.init
 
