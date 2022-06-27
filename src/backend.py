@@ -482,15 +482,24 @@ def PDR(P: FNode,
         # This check is mostly analogous to the inductive-step case check for the proof
         # obligations described above, except that if the check is successful,
         # we immediately return true.
-        step_case_n = get_step_case(k, P, T)
+
+        # Assume for any iteration n (k iterations from n to n + k − 1 = n) that the
+        # safety property holds, and from this assumption attempt to conclude that the
+        # safety property will also hold in the next iteration n + 1 (n + k).
+        step_case_n = get_step_case(k, T, P)
         ExternalInv = get_currently_known_invariant()
         Inv = InternalInv & ExternalInv
         if m := get_model(get_unrolling(Inv, 0, 0) & step_case_n):
             if pd:
                 s = get_assignment_as_formula_from_model(m)
-                # try to lift this state to a more abstract state that still satisfies
+                # Try to lift this state to a more abstract state that still satisfies
                 # the property that all of its successors violate the safety property.
                 if abstract_state := lift(k, Inv, P, s, T):
+                    # Negate this abstract state to obtain the proof obligation.
+                    # This means that we have learned that we should prove the
+                    # invariant ¬o, such that in future induction checks, we can remove
+                    # all states that satisfy `o` from the set of predecessor states
+                    # that need to be considered.
                     O = O.union(Not(abstract_state))
         else:
             print(f"[{k=}] Proved correctness: safety property is inductive")
