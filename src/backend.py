@@ -34,7 +34,8 @@ def at_time(v: FNode, t):
 
 def is_next(v: FNode):
     s = v.symbol_name()
-    return 'next(' == s[:5] and ')' == s[-1]
+    # return 'next(' == s[:5] and ')' == s[-1]
+    return 'next(' in s
 
 
 def get_subs(P: Container[FNode] | FNode, i: int):
