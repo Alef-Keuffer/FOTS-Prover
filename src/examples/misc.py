@@ -1,36 +1,7 @@
-from pysmt.fnode import FNode
 from pysmt.shortcuts import *
 
-from backend import BMCInduction, IMC, itp, interp
-
-
-def trab4FinalSimplificationIMC():
-    from util.examples.trab4 import trab4EvenMoreSimplified, trab4FinalSimplification, trab4NoImplies
-    example = trab4FinalSimplification(4)
-    for prop in example[1]:
-        print(f"proving {prop[1]}")
-        print(IMC(prop[0], example[0]))
-
-
-def trab4NormalInterpolator():
-    from util.examples.trab4 import trab4EvenMoreSimplified, trab4FinalSimplification, trab4NoImplies
-    example = trab4NoImplies(4)
-    bmcind = BMCInduction(example[0])
-    for prop in example[1]:
-        print(f"proving {prop[1]}")
-        # bmcind.check_property(prop[0])
-        print(IMC(prop[0], example[0]))
-
-
-def trab4CustomInterpolator():
-    from util.examples.trab4 import trab4EvenMoreSimplified, trab4FinalSimplification, trab4NoImplies
-    example = trab4NoImplies(4, pc_is_bv=False)
-    bmcind = BMCInduction(example[0])
-    for prop in example[1]:
-        print(f"proving {prop[1]}")
-        # bmcind.check_property(prop[0])
-        print(IMC(prop[0], example[0], customInterpolator=True))
-
+from backend import *
+from unfinished.interpolators import interp, itp
 
 
 def example_interpolation():
@@ -50,7 +21,9 @@ def example_interpolation2():
 
 def example_interpolation3():
     from pysmt.typing import INT
-    x, y, c0, c1, m = Symbol("x", INT), Symbol("y", INT), Symbol("c0", INT), Symbol("c1", INT), Symbol("m", INT)
+    x, y, c0, c1, m = Symbol("x", INT), Symbol("y", INT), Symbol("c0", INT), Symbol("c1",
+                                                                                    INT), Symbol(
+        "m", INT)
     P = x.Equals(c0) & c1.Equals(c0 + 1) & y.Equals(c1)
     Q = x.Equals(m) & y.Equals(m + 1)
     return binary_interpolant(P, Not(Q)), interp(P, Q)
@@ -65,7 +38,6 @@ def example_get_logic():
 
 
 def example_failed_interpolation1():
-    from pysmt.oracles import get_logic
     from pysmt.typing import INT, BVType
     x = Symbol("x", INT)
     y = Symbol("y", BVType())
@@ -73,7 +45,6 @@ def example_failed_interpolation1():
 
 
 def example_failed_interpolation2():
-    from pysmt.oracles import get_logic
     from pysmt.typing import INT, BVType
     x = Symbol("x", INT)
     y = Symbol("y", BVType())
@@ -81,28 +52,8 @@ def example_failed_interpolation2():
 
 
 def example_failed_interpolation3():
-    from pysmt.oracles import get_logic
     from pysmt.typing import INT, BVType
-    from pysmt.solvers.msat import MSatInterpolator
     x = Symbol("x", INT)
     y = Symbol("y", BVType(4))
     formulas = [x.Equals(0), y.Equals(0)]
     itp(And(formulas))
-
-
-def main():
-    """
-    .. execute_code::
-
-        from backend import *
-        trab4NormalInterpolator()
-    """
-    trab4NormalInterpolator()
-
-
-if __name__ == "__main__":
-    main()
-    # example_failed_interpolation3()
-    # print(example_interpolation())
-    # print(example_interpolation2())
-    # print(example_interpolation3())

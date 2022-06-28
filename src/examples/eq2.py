@@ -1,34 +1,31 @@
-from pysmt.shortcuts import *
+if __name__ == '__main__':
+    from pysmt.shortcuts import *
 
-from backend import *
+    from backend import *
+    from predicate import *
 
-pc = Symbol("pc", INT)
-x = Symbol("x", INT)
-y = Symbol("y", INT)
-z = Symbol("z", INT)
-w = Symbol("w", INT)
-r = Symbol("r", INT)
-npc = next_var(pc)
-nx = next_var(x)
-ny = next_var(y)
-nz = next_var(z)
-nw = next_var(w)
-nr = next_var(r)
+    pc = Predicate(Variable("pc", INT))
+    x = Predicate(Variable("x", INT))
+    y = Predicate(Variable("y", INT))
+    z = Predicate(Variable("z", INT))
+    w = Predicate(Variable("w", INT))
+    r = Predicate(Variable("r", INT))
 
-d = {x: nx, y: ny, r: nr, pc: npc, w: nw, z: nz}
-t = lambda s: And([d[v].Equals(v) for v in d if v not in s])
+    variables = {pc, x, y, z, w, r}
+    # Variables not in s are unchanged
+    t = lambda s: And([v[1].Equals(v[0]) for v in variables if v not in s])
 
-I = pc.Equals(0) & x.Equals(w) & y.Equals(w+1) & z.Equals(x+1)
-t1 = pc.Equals(0) & npc.Equals(1) & t({pc})
-t2 = pc.Equals(1) & npc.Equals(1) & ny.Equals(y + 1) & nz.Equals(z+1) & r.NotEquals(0) & t({pc})
-t3 = pc.Equals(1) & npc.Equals(2) & r.Equals(0) & t({pc})
-t4 = pc.Equals(2) & npc.Equals(2) & t({pc})
-T = t1 | t2 | t3 | t4
+    t1 = pc[0].Equals(0) & pc[1].Equals(1) & t({pc})
+    t2 = pc[0].Equals(1) & pc[1].Equals(1) & y[1].Equals(y[0] + 1) & z[1].Equals(
+        z[0] + 1) & r[0].NotEquals(0) & t({pc})
+    t3 = pc[0].Equals(1) & pc[1].Equals(2) & r[0].Equals(0) & t({pc})
+    t4 = pc[0].Equals(2) & pc[1].Equals(2) & t({pc})
 
-prop1 = pc.Equals(2).Implies(y.Equals(z))
+    T = Predicate(t1 | t2 | t3 | t4)
+    I = Predicate(
+        pc[0].Equals(0) & x[0].Equals(w[0]) & y[0].Equals(w[0] + 1) & z[0].Equals(
+            x[0] + 1))
+    prop1 = Predicate(pc[0].Equals(2).Implies(y[0].Equals(z[0])))
 
-TS = TransitionSystem(I, T)
-
-print(IMC(prop1, TS))
-
-print(PDR(prop1, TS))
+    print(IMC(I, T, prop1))
+    print(PDR(I, T, prop1))

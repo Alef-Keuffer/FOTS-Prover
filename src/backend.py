@@ -1,14 +1,15 @@
 import textwrap
-from typing import Container, Callable
+from typing import Container, Callable, Collection, Set
 from pysmt.fnode import FNode
 from pysmt.shortcuts import *
-from pysmt.solvers.msat import MSatInterpolator
 from enum import Enum, auto
 from pprint import pprint
 
 # General
 from pysmt.solvers.solver import Model
-from pysmt.typing import INT
+
+from predicate import Predicate
+
 INDENT = '  '
 
 
@@ -168,11 +169,11 @@ class BMCInduction:
 
 # Interpolating Model Checking
 
-def IMC(P: FNode,
-        TS: TransitionSystem,
-        S=None,
-        interpolator=binary_interpolant,
-        print_info=True):
+def IMC(S: Predicate,
+        T: Predicate,
+        P: Predicate,
+        interpolator: Callable[[FNode, FNode], FNode] = binary_interpolant,
+        print_info: bool = True):
     """
     Interpolating Model Checking
 
@@ -197,12 +198,9 @@ def IMC(P: FNode,
     model checking (BMC), is based on iteratively building such a :math:`\\hat P`.
     """
 
-    #: S denotes the set of initial states
-    if not S:
-        S = TS.init
-
     # first makes sure P is not violated by S
-    if m := get_model(S & Not(P)):
+    print("Checking if initial states violates safety property")
+    if m := get_model(S[0] & ~P[0]):
         # halt return a counterexample
         if print_info:
             print(f"[step 0] Initial state violates property:")
@@ -211,57 +209,67 @@ def IMC(P: FNode,
         return Status.UNSAFE1
 
     # bound
-    k = 1
+    k = 2
 
     # overapproximation of states at distance at most i from S
     i = 0
-    R_i = S.substitute(TS.get_subs(i))
+    R = S[0]
 
     # for a bound k and a current overapproximation R(i) of the states at distance at
     # most i from S, the algorithm checks if P is violated by the states reachable
     # from R(i) in at most k steps.
     while True:
-        A = R_i & TS.get_unrolling(1)
-        B = And(And(TS.get_unrolling(1, k)), Or(get_unrolling(Not(P), k)))
+        A = R & T[0]
+        B = T[1:k-1] & Or(~P[l] for l in range(k+1))
+        print(f"[{i=},{k=}] Checking BMC from R(i)")
         if m := get_model(A & B):
             # the error might be real or spurious, caused by an insufficient value of k
-            if is_valid(EqualsOrIff(R_i, S)):
+            if is_valid(EqualsOrIff(R, S[0])):
+                print(f"[{i=},{k=}] Checking if R=S")
                 # error is real so the system is unsafe
                 print(m)
                 return Status.UNSAFE2
             else:
                 # error is spurious so k is increased to allow finer
                 # overapproximations, and the algorithm restarts from S.
+                print(f"[{i=},{k=}] R != S")
                 k += 1
                 i = 0
-                R_i = S.substitute(TS.get_subs(i))
+                R = S[0]
         # R(i) ⋀_{j=0}^{k−1} T^j ⋁_{l=0}^k ¬P^l is unsat
         else:
             # an interpolant I(i) is computed, which represents an approximation of the
             # image of R(i) (i.e., of the states reachable from R(i) in one step).
-            I_i = interpolator(A, B)
+            print(f"[{i=},{k=}] Calculating interpolant")
+            I = interpolator(A, B)
 
             # a fixpoint check is carried out: if I(i) |= R(i), it means that all
             # states have been covered, and the system is safe; otherwise, R(i + 1) is
             # set to R(i) ∨ I(i) and the procedure continues.
-            if is_valid(I_i.Implies(R_i)):
+            # solver = Solver()
+            # solver.add_assertion(I_i)
+            # if is_valid(I.Implies(R)):
+            if is_valid(I.Implies(R)):
+            # if solver.is_valid(R_i):
                 # the current R(i) corresponds to an inductive invariant P̂ stronger
                 # than P: on one side, S |= R(i), moreover R(i) ∧ T |= I'(i) and I(i)
                 # |= R(i) imply R(i) ∧ T |= R'(i); on the other side, the fact that at
                 # each iteration 0 ≤ h ≤ i, R(h) ∧ ⋀_{j=0}^{k−1} T |= ⋀_{l=0}^k P^l,
                 # together with R(i) being an inductive invariant, yield R(i) |= P.
                 if print_info:
-                    print(f"[step {i}] Proved safety: all states have been covered, "
+                    # print(f"R({i}) = ", R.simplify().serialize())
+                    print(f"[{i=},{k=}] Proved safety: all states have been covered, "
                           f"and the system is safe")
                 return Status.SAFE
             else:
-                R_i = R_i | I_i
+                print(f"[{i=},{k=}] I !=> R")
+                R |= I
                 i += 1
 
 
 # PDR
 
-def get_assignment_as_formula_from_model(M: Model):
+def get_assignment_as_formula_from_model(M: Model) -> None | FNode:
     """
     :return: :math:`\\displaystyle\\bigwedge_{x ∈ \\operatorname{vars}(M)}\\left(\
         x ≡ ⟦x⟧_M
@@ -281,14 +289,14 @@ def get_assignment_as_formula(F: FNode) -> None | FNode:
     return get_assignment_as_formula_from_model(get_model(F))
 
 
-def _strenghten(k, Inv, o):
+def _strenghten(k: int, Inv: Predicate, o: Predicate) -> FNode:
     """
     One possible implementation is attempting to drop components from a (disjunctive)
     invariant and checking if the remaining clause is still inductive.
     """
 
 
-def _lift(k, Inv, Q, s, T):
+def _lift(k: int, Inv: Predicate, Q: Predicate, s: Predicate, T: Predicate) -> None | FNode:
     """
     We can implement lift using Craig interpolation between
 
@@ -299,11 +307,11 @@ def _lift(k, Inv, Q, s, T):
     the resulting interpolant satisfies the criteria for :math:`C` to be a valid
     lifting of s according to the requirements towards the function lift.
     """
-    A = get_unrolling(s, 0, 0)
-    B = (get_unrolling(Inv, 0, 0) &
-         get_unrolling(Q, k - 1) &
-         get_unrolling(T, k - 1)
-         ).Implies(Not(get_unrolling(Q, k, k)))
+    A = s@0
+    B = (Inv@0 &
+         Q[:k - 1] &
+         T[:k - 1]
+         ).Implies(Not(Q@k))
     from pysmt.exceptions import NoSolverAvailableError
     try:
         return binary_interpolant(A, B)
@@ -311,21 +319,19 @@ def _lift(k, Inv, Q, s, T):
         return None
 
 
-def get_base_case(k, I, T, P):
+def get_base_case(k: int, I: Predicate, T: Predicate, P: Predicate) -> FNode:
     """
     :return: :math:`I(0) ∧ \\displaystyle\\bigvee_{n=0}^{k-1}\\left(\\displaystyle\
         \\bigwedge_{i=0}^{n-1} T(i,i+1) ∧ ¬P(n)\
         \\right)`
     """
-    return (
-        get_unrolling(I, 0, 0) &
-        Or([get_unrolling(T, n) &
-            Not(get_unrolling(P, n, n))
-            for n in range(k)])
+    return And(
+        I[0],
+        Or([T[:n-1] & ~P[n] for n in range(k)])
     )
 
 
-def get_step_case(k: int, T: FNode, P: FNode):
+def get_step_case(k: int, T: Predicate, P: Predicate) -> FNode:
     """
     We assume this means that the forumla returned is an assertion over any k sequenece
     of states.
@@ -337,15 +343,19 @@ def get_step_case(k: int, T: FNode, P: FNode):
         ∧ ¬P(n)`
         with the idea that making :math:`n=0` in pySMT is equivalent to the formula above.
     """
-    return (
-        get_unrolling(P, k - 1) &
-        get_unrolling(T, k - 1) &
-        Not(get_unrolling(P, k, k))
+    return And(
+            (P[:k - 1]),
+            (T[:k - 1]),
+            # Should we do Or(~P[i] for i in range(k+1)) instead of
+            # ~P[k]?
+            ~P[k],
+            # Or(~P[i] for i in range(k+1))
     )
 
 
-def PDR(P: FNode,
-        TS: TransitionSystem,
+def PDR(I: Predicate,
+        T: Predicate,
+        P: Predicate,
         get_currently_known_invariant=lambda: TRUE(),
         strengthen=lambda k, Inv, o: Inv,
         lift=_lift,
@@ -401,20 +411,17 @@ def PDR(P: FNode,
     :return: `True` if `P` holds, `Status.UNKNOWN` if `k > k_max` , `False` otherwise.
     """
 
-    I = TS.init
-    T = TS.trans
-
     # current bound
-    k = k_init
+    k: int = k_init
 
     # the invariant computed by this algorithm internally
-    InternalInv = TRUE()
+    InternalInv: FNode = TRUE()
 
     # the set of current proof obligations.
-    O = set()
+    O: Set[Predicate] = set()
 
     while k <= k_max:
-        O_prev = O
+        O_prev: Set[Predicate] = O
         O = set()
 
         # begin: base-case check (BMC)
@@ -440,9 +447,10 @@ def PDR(P: FNode,
         # to prove that BMC fully explored the state space of the program by checking
         # that no state with distance k′ > k−1 to the initial state is reachable. If this
         # check is successful, the algorithm terminates.
-        forward_condition = get_unrolling(I, 0) & get_unrolling(T, k)
+        forward_condition = I[0] & T[:k-1]
         if is_unsat(forward_condition):
             print(f"[{k=}] Proved correctness: successful forward condition check")
+            pprint(forward_condition.serialize())
             return True
         # end ############################################################################
 
@@ -490,9 +498,9 @@ def PDR(P: FNode,
                     # and starts over.
                     step_case_o_n = get_step_case(k, T, o)
                     ExternalInv = get_currently_known_invariant()
-                    Inv = InternalInv & ExternalInv
-                    if m := get_model(get_unrolling(Inv, 0, 0) & step_case_o_n):
-                        s_o = get_assignment_as_formula_from_model(m)
+                    Inv = Predicate(InternalInv & ExternalInv)
+                    if m := get_model(Inv[0] & step_case_o_n):
+                        s_o = Predicate(get_assignment_as_formula_from_model(m))
                         predicate_describing_set_of_CTI_states = lift(k, Inv, P, s_o, T)
                         if predicate_describing_set_of_CTI_states:
                             O = O.union(Not(predicate_describing_set_of_CTI_states))
@@ -523,13 +531,13 @@ def PDR(P: FNode,
         # safety property will also hold in the next iteration n + 1 (n + k).
         step_case_n = get_step_case(k, T, P)
         ExternalInv = get_currently_known_invariant()
-        Inv = InternalInv & ExternalInv
-        if m := get_model(get_unrolling(Inv, 0, 0) & step_case_n):
+        Inv = Predicate(InternalInv & ExternalInv)
+        if m := get_model(Inv[0] & step_case_n):
             if pd:
                 s = get_assignment_as_formula_from_model(m)
                 # Try to lift this state to a more abstract state that still satisfies
                 # the property that all of its successors violate the safety property.
-                if abstract_state := lift(k, Inv, P, s, T):
+                if abstract_state := lift(k, Inv, P, Predicate(s), T):
                     # Negate this abstract state to obtain the proof obligation.
                     # This means that we have learned that we should prove the
                     # invariant ¬o, such that in future induction checks, we can remove
@@ -545,21 +553,6 @@ def PDR(P: FNode,
     print("Property's status is unknown: exceeded maximum number of iterations")
     return Status.UNKNOWN
 
-
-def test_pdr_on_trab_4():
-    from util.examples.trab4 import trab4NoImplies, trab4FinalSimplification, trab4PDR
-    example = trab4PDR(4)
-
-    def get_currently_know_invariant(): return True
-
-    for prop in example[1]:
-        pprint(f"proving {prop[1]} ({prop[0].serialize()})")
-        # bmcind.check_property(prop[0])
-        print(PDR(prop[0], example[0], inc=lambda n: n+3),'\n')
-
-
-if __name__ == "__main__":
-    test_pdr_on_trab_4()
 
 """
 Converting pc from INT to BVType allows the use of QF_BV.
