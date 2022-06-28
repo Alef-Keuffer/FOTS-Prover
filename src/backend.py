@@ -41,16 +41,23 @@ def is_next(v: FNode):
 
 def get_name(s: FNode):
     import re
-    return re.search(r'](.*)', s.symbol_name()).group(1)
+    return re.search(r'(.*)@', s.symbol_name()).group(1)
+
+
+def get_index(s: FNode):
+    import re
+    return re.search(r'(.*)@(.*)', s.symbol_name()).group(2)
 
 
 def str_model(m: Model):
     d = {}
     s = []
-    i = 0
-    for x, v in sorted(m, key=lambda t: t[0].symbol_name()):
+    for x, v in sorted(m, key=lambda t: int(get_index(t[0]))):
         n = get_name(x)
-        s.append(f"{'*' * int(x.symbol_name()[1] != '0' and d[n] != v)}{x} := {v}")
+        if get_index(x) != '0' and d[n] != v:
+            s.append(f'* {x} := {v}')
+        else:
+            s.append(f'  {x} := {v}')
         d[n] = v
 
     return '\n'.join(s)
