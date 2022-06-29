@@ -1,9 +1,32 @@
+%%%%%%%%%%%%%%%%%%%%%%
+% Misc
+%%%%%%%%%%%%%%%%%%%%%%
+
 @misc{lc2122,
-url = {https://paper.dropbox.com/doc/LC-2021-2022-Enquadramento-das-Licoes-Teoricas-e-Trabalhos-Praticos.-k8rNBwB0iPVJlAoeI4bWe},
-author = "Valença, José Manuel Esgalhado",
-title = "LC 2021-2022: Enquadramento das Lições Teóricas e Trabalhos Práticos"
-year = {2021},
-publisher = {Departamento de Informática da Universidade do Minho}
+    url = {https://paper.dropbox.com/doc/LC-2021-2022-Enquadramento-das-Licoes-Teoricas-e-Trabalhos-Praticos.-k8rNBwB0iPVJlAoeI4bWe},
+    author = "Valença, José Manuel Esgalhado",
+    title = "LC 2021-2022: Enquadramento das Lições Teóricas e Trabalhos Práticos",
+    year = {2021},
+    publisher = {Departamento de Informática da Universidade do Minho}
+}
+
+@misc{bachelor_thesis,
+    url = {https://es.cs.uni-kl.de/publications/datarsg/Eick12.pdf},
+    title = {Program Sketching Using Craig Interpolants},
+    author = "Eickhoff, Thomas",
+    year = {2012},
+    university = {Technische Universität Kaiserslautern}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%
+% Misc
+%%%%%%%%%%%%%%%%%%%%%%
+@article{bdd,
+    author = {Randal E. Bryant},
+    title = {Graph-based algorithms for boolean function manipulation},
+    journal = {IEEE Transactions on Computers},
+    year = {1986},
+    url = {http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.299.9753}
 }
 
 @InProceedings{bmc,
@@ -16,10 +39,21 @@ publisher="Springer Berlin Heidelberg",
 address="Berlin, Heidelberg",
 pages="193--207",
 abstract="Symbolic Model Checking [3], [14] has proven to be a powerful technique for the verification of reactive systems. BDDs [2] have traditionally been used as a symbolic representation of the system. In this paper we show how boolean decision procedures, like St{\aa}lmarck's Method [16] or the Davis {\&} Putnam Procedure [7], can replace BDDs. This new technique avoids the space blow up of BDDs, generates counterexamples much faster, and sometimes speeds up the verification. In addition, it produces counterexamples of minimal length. We introduce a bounded model checking procedure for LTL which reduces model checking to propositional satisfiability.We show that bounded LTL model checking can be done without a tableau construction. We have implemented a model checker BMC, based on bounded model checking, and preliminary results are presented.",
-isbn="978-3-540-49059-3"
+isbn="978-3-540-49059-3",
+url = {https://link.springer.com/chapter/10.1007/3-540-49059-0_14}
 }
 
-@InProceedings{kind,
+@article{bmc2,
+  title={Bounded Model Checking Using Satisfiability Solving},
+  author={Edmund M. Clarke and Armin Biere and Richard Raimi and Yunshan Zhu},
+  journal={Formal Methods in System Design},
+  year={2001},
+  volume={19},
+  pages={7-34},
+  url = {https://link.springer.com/article/10.1023/A:1011276507260}
+}
+
+@InProceedings{kind_original,
 author="Sheeran, Mary and Singh, Satnam and St{\aa}lmarck, Gunnar",
 editor="Hunt, Warren A. and Johnson, Steven D.",
 title="Checking Safety Properties Using Induction and a SAT-Solver",
@@ -29,12 +63,44 @@ publisher="Springer Berlin Heidelberg",
 address="Berlin, Heidelberg",
 pages="127--144",
 abstract="We take a fresh look at the problem of how to check safety properties of finite state machines. We are particularly interested in checking safety properties with the help of a SAT-solver. We describe some novel induction-based methods, and show how they are related to more standard fixpoint algorithms for invariance checking. We also present preliminary experimental results in the verification of FPGA cores. This demonstrates the practicality of combining a SAT-solver with induction for safety property checking of hardware in a real design flow.",
-isbn="978-3-540-40922-9"
+isbn="978-3-540-40922-9",
+url = {https://link.springer.com/chapter/10.1007/3-540-40922-X_8}
 }
+
+@InProceedings{kind_state_of_art,
+author="Beyer, Dirk and Dangl, Matthias and Wendler, Philipp",
+editor="Kroening, Daniel and P{\u{a}}s{\u{a}}reanu, Corina S.",
+title="Boosting k-Induction with Continuously-Refined Invariants",
+booktitle="Computer Aided Verification",
+year="2015",
+publisher="Springer International Publishing",
+address="Cham",
+pages="622--640",
+abstract="{\$}{\$}k{\$}{\$}-induction is a promising technique to extend bounded model checking from falsification to verification. In software verification, {\$}{\$}k{\$}{\$}-induction works only if auxiliary invariants are used to strengthen the induction hypothesis. The problem that we address is to generate such invariants (1) automatically without user-interaction, (2) efficiently such that little verification time is spent on the invariant generation, and (3) that are sufficiently strong for a {\$}{\$}k{\$}{\$}-induction proof. We boost the {\$}{\$}k{\$}{\$}-induction approach to significantly increase effectiveness and efficiency in the following way: We start in parallel to {\$}{\$}k{\$}{\$}-induction a data-flow-based invariant generator that supports dynamic precision adjustment and refine the precision of the invariant generator continuously during the analysis, such that the invariants become increasingly stronger. The {\$}{\$}k{\$}{\$}-induction engine is extended such that the invariants from the invariant generator are injected in each iteration to strengthen the hypothesis. The new method solves the above-mentioned problem because it (1) automatically chooses an invariant by step-wise refinement, (2) starts always with a lightweight invariant generation that is computationally inexpensive, and (3) refines the invariant precision more and more to inject stronger and stronger invariants into the induction system. We present and evaluate an implementation of our approach, as well as all other existing approaches, in the open-source verification-framework CPAchecker. Our experiments show that combining {\$}{\$}k{\$}{\$}-induction with continuously-refined invariants significantly increases effectiveness and efficiency, and outperforms all existing implementations of {\$}{\$}k{\$}{\$}-induction-based verification of C programs in terms of successful results.			",
+isbn="978-3-319-21690-4",
+url= {https://link.springer.com/chapter/10.1007/978-3-319-21690-4_42}
+}
+
+
 
 %%%%%%%%%%%%%%%%%%%
 
-@article{interpolation1,
+@InProceedings{interpolation_original,
+    author="McMillan, K. L.",
+    editor="Hunt, Warren A.
+    and Somenzi, Fabio",
+    title="Interpolation and SAT-Based Model Checking",
+    booktitle="Computer Aided Verification",
+    year="2003",
+    publisher="Springer Berlin Heidelberg",
+    address="Berlin, Heidelberg",
+    pages="1--13",
+    abstract="We consider a fully SAT-based method of unbounded symbolic model checking based on computing Craig interpolants. In benchmark studies using a set of large industrial circuit verification instances, this method is greatly more efficient than BDD-based symbolic model checking, and compares favorably to some recent SAT-based model checking methods on positive instances.",
+    isbn="978-3-540-45069-6",
+    url = {https://link.springer.com/chapter/10.1007/978-3-540-45069-6_1#editor-information},
+}
+
+@article{interpolation_state_of_art,
   url = {https://www.sosy-lab.org/research/cpa-imc/},
   
   author = {Beyer, Dirk and Lee, Nian-Ze and Wendler, Philipp},
@@ -46,7 +112,7 @@ isbn="978-3-540-40922-9"
   title = {Interpolation and SAT-Based Model Checking Revisited: Adoption to Software Verification},
 }
 
-@phdthesis{interpolation2,
+@phdthesis{interpolation_thesis,
   url = {https://www.usi.ch/it/feeds/8797},
 
   author = {Fulvio Rollini, Simone},
@@ -60,22 +126,50 @@ isbn="978-3-540-40922-9"
   university = {Università della Svizzera Italiana}
 }
 
-@InProceedings{ctigar,
-    author="Birgmeier, Johannes and Bradley, Aaron R. and Weissenbacher, Georg",
-    editor="Biere, Armin and Bloem, Roderick",
-    title="Counterexample to Induction-Guided Abstraction-Refinement (CTIGAR)",
-    booktitle="Computer Aided Verification",
-    year="2014",
-    publisher="Springer International Publishing",
-    address="Cham",
-    pages="831--848",
-    abstract="Typical CEGAR-based verification methods refine the abstract domain based on full counterexample traces. The finite state model checking algorithm IC3 introduced the concept of discovering, generalizing from, and thereby eliminating individual state counterexamples to induction (CTIs). This focus on individual states suggests a simpler abstraction-refinement scheme in which refinements are performed relative to single steps of the transition relation, thus reducing the expense of refinement and eliminating the need for full traces. Interestingly, this change in refinement focus leads to a natural spectrum of refinement options, including when to refine and which type of concrete single-step query to refine relative to. Experiments validate that CTI-focused abstraction refinement, or CTIGAR, is competitive with existing CEGAR-based tools.",
-    isbn="978-3-319-08867-9"
+@InProceedings{interpolant_spc_wpc,
+    author="McMillan, K. L.",
+    editor="Halbwachs, Nicolas and Zuck, Lenore D.",
+    title="Applications of Craig Interpolants in Model Checking",
+    booktitle="Tools and Algorithms for the Construction and Analysis of Systems",
+    year="2005",
+    publisher="Springer Berlin Heidelberg",
+    address="Berlin, Heidelberg",
+    pages="1--12",
+    abstract="A Craig interpolant for a mutually inconsistent pair of formulas (A,B) is a formula that is (1) implied by A, (2) inconsistent with B, and (3) expressed over the common variables of A and B. An interpolant can be efficiently derived from a refutation of A ∧ B, for certain theories and proof systems. We will discuss a number of applications of this concept in finite- and infinite-state model checking.",
+    isbn="978-3-540-31980-1",
+    url = {https://link.springer.com/chapter/10.1007/978-3-540-31980-1_1#citeas}
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 
-@article{pdrverification,
+@INPROCEEDINGS{inductive_general,
+  author={Bradley, Aaron R. and Manna, Zohar},
+  booktitle={Formal Methods in Computer Aided Design (FMCAD'07)}, 
+  title={Checking Safety by Inductive Generalization of Counterexamples to Induction}, 
+  year={2007},
+  volume={},
+  number={},
+  pages={173-180},
+  doi={10.1109/FAMCAD.2007.15},
+  url = {https://ieeexplore.ieee.org/document/4401997}
+ }
+
+
+@InProceedings{pdr_original,
+author="Bradley, Aaron R.",
+editor="Jhala, Ranjit
+and Schmidt, David",
+title="SAT-Based Model Checking without Unrolling",
+booktitle="Verification, Model Checking, and Abstract Interpretation",
+year="2011",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="70--87",
+abstract="A new form of SAT-based symbolic model checking is described. Instead of unrolling the transition relation, it incrementally generates clauses that are inductive relative to (and augment) stepwise approximate reachability information. In this way, the algorithm gradually refines the property, eventually producing either an inductive strengthening of the property or a counterexample trace. Our experimental studies show that induction is a powerful tool for generalizing the unreachability of given error states: it can refine away many states at once, and it is effective at focusing the proof search on aspects of the transition system relevant to the property. Furthermore, the incremental structure of the algorithm lends itself to a parallel implementation.",
+isbn="978-3-642-18275-4"
+}
+
+@article{pdr_state_of_art,
   doi = {10.48550/ARXIV.1908.06271},
   
   url = {https://arxiv.org/abs/1908.06271},
@@ -93,25 +187,12 @@ isbn="978-3-540-40922-9"
   copyright = {arXiv.org perpetual, non-exclusive license}
 }
 
-@InProceedings{pdr1,
-author="Bradley, Aaron R.",
-editor="Jhala, Ranjit
-and Schmidt, David",
-title="SAT-Based Model Checking without Unrolling",
-booktitle="Verification, Model Checking, and Abstract Interpretation",
-year="2011",
-publisher="Springer Berlin Heidelberg",
-address="Berlin, Heidelberg",
-pages="70--87",
-abstract="A new form of SAT-based symbolic model checking is described. Instead of unrolling the transition relation, it incrementally generates clauses that are inductive relative to (and augment) stepwise approximate reachability information. In this way, the algorithm gradually refines the property, eventually producing either an inductive strengthening of the property or a counterexample trace. Our experimental studies show that induction is a powerful tool for generalizing the unreachability of given error states: it can refine away many states at once, and it is effective at focusing the proof search on aspects of the transition system relevant to the property. Furthermore, the incremental structure of the algorithm lends itself to a parallel implementation.",
-isbn="978-3-642-18275-4"
-}
-
-@inproceedings{pdr2,
+@inproceedings{pdr_efficient,
     author = {Een, Niklas and Mishchenko, Alan and Brayton, Robert},
     title = {Efficient Implementation of Property Directed Reachability},
     year = {2011},
     isbn = {9780983567813},
+    url = {https://dl.acm.org/doi/10.5555/2157654.2157675},
     publisher = {FMCAD Inc},
     address = {Austin, Texas},
     abstract = {Last spring, in March 2010, Aaron Bradley published the first truly new bit-level symbolic model checking algorithm since Ken McMillan's interpolation based model checking procedure introduced in 2003. Our experience with the algorithm suggests that it is stronger than interpolation on industrial problems, and that it is an important algorithm to study further. In this paper, we present a simplified and faster implementation of Bradley's procedure, and discuss our successful and unsuccessful attempts to improve it.},
@@ -120,4 +201,42 @@ isbn="978-3-642-18275-4"
     numpages = {10},
     location = {Austin, Texas},
     series = {FMCAD '11}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+@inproceedings{ic3,
+  title={Understanding IC3},
+  author={Aaron R. Bradley},
+  booktitle={SAT},
+  year={2012},
+  url = {https://link.springer.com/chapter/10.1007/978-3-642-31612-8_1}
+}
+
+@InProceedings{ic3_vienna,
+author="G{\"u}nther, Henning and Laarman, Alfons and Weissenbacher, Georg",
+editor="Chechik, Marsha and Raskin, Jean-Fran{\c{c}}ois",
+title="Vienna Verification Tool: IC3 for Parallel Software",
+booktitle="Tools and Algorithms for the Construction and Analysis of Systems",
+year="2016",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="954--957",
+abstract="Recently proposed extensions of the IC3 model checking algorithm offer a powerful new way to symbolically verify software. The Vienna Verification Tool (VVT) implements these techniques with the aim to tackle the problem of parallel software verification. Its SMT-based abstraction mechanisms allow VVT to deal with infinite state systems. In addition, VVT utilizes a coarse-grained large-block encoding and a variant of Lipton's reduction to reduce the number of interleavings. This paper introduces VVT, its underlying architecture and use.",
+isbn="978-3-662-49674-9",
+url = {https://doi.org/10.1007/978-3-662-49674-9_69}
+}
+
+@InProceedings{ctigar,
+    author="Birgmeier, Johannes and Bradley, Aaron R. and Weissenbacher, Georg",
+    editor="Biere, Armin and Bloem, Roderick",
+    title="Counterexample to Induction-Guided Abstraction-Refinement (CTIGAR)",
+    booktitle="Computer Aided Verification",
+    year="2014",
+    publisher="Springer International Publishing",
+    address="Cham",
+    pages="831--848",
+    abstract="Typical CEGAR-based verification methods refine the abstract domain based on full counterexample traces. The finite state model checking algorithm IC3 introduced the concept of discovering, generalizing from, and thereby eliminating individual state counterexamples to induction (CTIs). This focus on individual states suggests a simpler abstraction-refinement scheme in which refinements are performed relative to single steps of the transition relation, thus reducing the expense of refinement and eliminating the need for full traces. Interestingly, this change in refinement focus leads to a natural spectrum of refinement options, including when to refine and which type of concrete single-step query to refine relative to. Experiments validate that CTI-focused abstraction refinement, or CTIGAR, is competitive with existing CEGAR-based tools.",
+    isbn="978-3-319-08867-9",
+    url = {https://link.springer.com/chapter/10.1007/978-3-319-08867-9_55}
 }

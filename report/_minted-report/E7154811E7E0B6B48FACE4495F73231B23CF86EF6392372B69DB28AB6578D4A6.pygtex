@@ -1,0 +1,45 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{trab4FinalSimplification}\PYG{p}{(}\PYG{n}{bit\PYGZus{}count}\PYG{p}{):}
+    \PYG{k+kn}{from} \PYG{n+nn}{pysmt.typing} \PYG{k+kn}{import} \PYG{n}{BVType}
+
+    \PYG{c+c1}{\PYGZsh{} Variables}
+    \PYG{n}{x} \PYG{o}{=} \PYG{n}{Symbol}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}x\PYGZdq{}}\PYG{p}{,} \PYG{n}{BVType}\PYG{p}{(}\PYG{n}{bit\PYGZus{}count}\PYG{p}{))}
+    \PYG{n}{m} \PYG{o}{=} \PYG{n}{Symbol}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}m\PYGZdq{}}\PYG{p}{,} \PYG{n}{BVType}\PYG{p}{(}\PYG{n}{bit\PYGZus{}count}\PYG{p}{))}
+    \PYG{n}{n} \PYG{o}{=} \PYG{n}{Symbol}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}n\PYGZdq{}}\PYG{p}{,} \PYG{n}{BVType}\PYG{p}{(}\PYG{n}{bit\PYGZus{}count}\PYG{p}{))}
+    \PYG{n}{y} \PYG{o}{=} \PYG{n}{Symbol}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}y\PYGZdq{}}\PYG{p}{,} \PYG{n}{BVType}\PYG{p}{(}\PYG{n}{bit\PYGZus{}count}\PYG{p}{))}
+    \PYG{n}{r} \PYG{o}{=} \PYG{n}{Symbol}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}r\PYGZdq{}}\PYG{p}{,} \PYG{n}{BVType}\PYG{p}{(}\PYG{n}{bit\PYGZus{}count}\PYG{p}{))}
+    \PYG{n}{pc} \PYG{o}{=} \PYG{n}{Symbol}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}pc\PYGZdq{}}\PYG{p}{,} \PYG{n}{BVType}\PYG{p}{(}\PYG{n}{bit\PYGZus{}count}\PYG{p}{))}
+
+    \PYG{n}{npc} \PYG{o}{=} \PYG{n}{next\PYGZus{}var}\PYG{p}{(}\PYG{n}{pc}\PYG{p}{)}
+    \PYG{n}{ny} \PYG{o}{=} \PYG{n}{next\PYGZus{}var}\PYG{p}{(}\PYG{n}{y}\PYG{p}{)}
+    \PYG{n}{nx} \PYG{o}{=} \PYG{n}{next\PYGZus{}var}\PYG{p}{(}\PYG{n}{x}\PYG{p}{)}
+    \PYG{n}{nr} \PYG{o}{=} \PYG{n}{next\PYGZus{}var}\PYG{p}{(}\PYG{n}{r}\PYG{p}{)}
+
+    \PYG{k+kn}{from} \PYG{n+nn}{util.transition} \PYG{k+kn}{import} \PYG{n}{TransitionPredicate}
+
+    \PYG{n}{T} \PYG{o}{=} \PYG{n}{TransitionPredicate}\PYG{p}{()}
+
+    \PYG{c+c1}{\PYGZsh{} pc = 0 ∧ y \PYGZgt{} 0 \PYGZhy{}\PYGZgt{} pc′ = 1                  enters WHILE}
+    \PYG{n}{T}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{pc}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{\PYGZam{}} \PYG{p}{(}\PYG{n}{y} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{),} \PYG{n}{npc}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{))}
+    \PYG{c+c1}{\PYGZsh{} pc = 0 ∧ y ≤ 0 \PYGZhy{}\PYGZgt{} pc′ = 3                 doesn\PYGZsq{}t enters WHILE}
+    \PYG{n}{T}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{pc}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{\PYGZam{}} \PYG{p}{(}\PYG{n}{y} \PYG{o}{\PYGZlt{}=} \PYG{l+m+mi}{0}\PYG{p}{),} \PYG{n}{npc}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{l+m+mi}{3}\PYG{p}{))}
+    \PYG{c+c1}{\PYGZsh{} pc = 1 ∧ y \PYGZam{} 1 = 1 \PYGZhy{}\PYGZgt{} y′ = y − 1 ∧ r′ = r + x ∧ pc′ = 2      IF condition is true}
+    \PYG{n}{T}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{pc}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{\PYGZam{}} \PYG{p}{(}\PYG{n}{y} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{1}\PYG{p}{)}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{),} \PYG{n}{npc}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{\PYGZam{}} \PYG{n}{ny}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{n}{y} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{\PYGZam{}} \PYG{n}{nr}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{n}{r} \PYG{o}{+} \PYG{n}{x}\PYG{p}{))}
+    \PYG{c+c1}{\PYGZsh{} pc = 1 ∧ y \PYGZam{} 1 ≠ 1 \PYGZhy{}\PYGZgt{} pc′ = 2                      IF condition is false}
+    \PYG{n}{T}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{pc}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{\PYGZam{}} \PYG{p}{(}\PYG{n}{y} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{1}\PYG{p}{)}\PYG{o}{.}\PYG{n}{NotEquals}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{),} \PYG{n}{npc}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{))}
+    \PYG{c+c1}{\PYGZsh{} pc = 2 \PYGZhy{}\PYGZgt{} y′ = y \PYGZgt{}\PYGZgt{} 1 ∧ x′ = x \PYGZlt{}\PYGZlt{} 1 ∧ pc′ = 0      loop back after attributions}
+    \PYG{n}{T}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{pc}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{),} \PYG{n}{npc}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{\PYGZam{}} \PYG{n}{nx}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{n}{x} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{\PYGZam{}} \PYG{n}{ny}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{n}{y} \PYG{o}{\PYGZgt{}\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{))}
+    \PYG{c+c1}{\PYGZsh{} pc = 3         end of program}
+    \PYG{n}{T}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{pc}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{l+m+mi}{3}\PYG{p}{))}
+
+    \PYG{n}{pre} \PYG{o}{=} \PYG{p}{((}\PYG{n}{m} \PYG{o}{\PYGZgt{}=} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{\PYGZam{}}  \PYG{c+c1}{\PYGZsh{} m ≥ 0}
+           \PYG{p}{(}\PYG{n}{n} \PYG{o}{\PYGZgt{}=} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{\PYGZam{}}  \PYG{c+c1}{\PYGZsh{} n ≥ 0}
+           \PYG{n}{r}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{\PYGZam{}}  \PYG{c+c1}{\PYGZsh{} r = 0}
+           \PYG{n}{x}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{n}{m}\PYG{p}{)} \PYG{o}{\PYGZam{}}  \PYG{c+c1}{\PYGZsh{} x = m}
+           \PYG{n}{y}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{n}{n}\PYG{p}{)}  \PYG{c+c1}{\PYGZsh{} y = n}
+           \PYG{p}{)}
+
+    \PYG{n}{init} \PYG{o}{=} \PYG{n}{pc}\PYG{o}{.}\PYG{n}{Equals}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{\PYGZam{}} \PYG{n}{pre}
+    \PYG{k}{return} \PYG{n}{TransitionSystem}\PYG{p}{(}\PYG{n}{init}\PYG{p}{,} \PYG{n}{T}\PYG{o}{.}\PYG{n}{get}\PYG{p}{())}
+\PYG{p}{)}
+\end{Verbatim}

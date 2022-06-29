@@ -1,0 +1,201 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{PDR}\PYG{p}{(}\PYG{n}{I}\PYG{p}{:} \PYG{n}{Predicate}\PYG{p}{,}
+        \PYG{n}{T}\PYG{p}{:} \PYG{n}{Predicate}\PYG{p}{,}
+        \PYG{n}{P}\PYG{p}{:} \PYG{n}{Predicate}\PYG{p}{,}
+        \PYG{n}{get\PYGZus{}currently\PYGZus{}known\PYGZus{}invariant}\PYG{o}{=}\PYG{k}{lambda}\PYG{p}{:} \PYG{n}{TRUE}\PYG{p}{(),}
+        \PYG{n}{strengthen}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{k}\PYG{p}{,} \PYG{n}{Inv}\PYG{p}{,} \PYG{n}{o}\PYG{p}{:} \PYG{n}{Inv}\PYG{p}{,}
+        \PYG{n}{lift}\PYG{o}{=}\PYG{n}{\PYGZus{}lift}\PYG{p}{,}
+        \PYG{n}{k\PYGZus{}init}\PYG{p}{:} \PYG{n+nb}{int} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{,}
+        \PYG{n}{k\PYGZus{}max}\PYG{p}{:} \PYG{n+nb}{int} \PYG{o}{=} \PYG{n+nb}{float}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}inf\PYGZsq{}}\PYG{p}{),}
+        \PYG{n}{pd}\PYG{p}{:} \PYG{n+nb}{bool} \PYG{o}{=} \PYG{k+kc}{True}\PYG{p}{,}
+        \PYG{n}{inc}\PYG{p}{:} \PYG{n}{Callable}\PYG{p}{[[}\PYG{n+nb}{int}\PYG{p}{],} \PYG{n+nb}{int}\PYG{p}{]} \PYG{o}{=} \PYG{k}{lambda} \PYG{n}{n}\PYG{p}{:} \PYG{n}{n} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{,}
+        \PYG{n}{print\PYGZus{}info}\PYG{o}{=}\PYG{k+kc}{True}
+        \PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n+nb}{bool} \PYG{o}{|} \PYG{n}{Status}\PYG{p}{:}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    Iterative\PYGZhy{}Deepening k\PYGZhy{}Induction with Property Direction.}
+
+\PYG{l+s+sd}{    As specified at D. Beyer and M. Dangl, “Software Verification with PDR:}
+\PYG{l+s+sd}{    Implementation and Empirical Evaluation of the State of the Art” arXiv\PYGZbs{}:1908.06271}
+\PYG{l+s+sd}{    [cs], Feb. 2020, Accessed: Mar. 05, 2022. [Online]. Available}
+\PYG{l+s+sd}{    https://arxiv.org/abs/1908.06271.}
+
+\PYG{l+s+sd}{    :param print\PYGZus{}info: Whether info about the steps should be printed.}
+\PYG{l+s+sd}{    :param k\PYGZus{}init: the initial value :math:`≥1` for the bound `k`}
+\PYG{l+s+sd}{    :param k\PYGZus{}max: an upper limit for the bound `k`}
+\PYG{l+s+sd}{    :param inc: a function :math:`ℕ → ℕ` such that :math:`∀n ∈ ℕ: \PYGZbs{}\PYGZbs{}inc(n) \PYGZgt{} n`}
+\PYG{l+s+sd}{    :param TS: Contains predicates defining the initial states and the transfer relation}
+\PYG{l+s+sd}{    :param P: The safety property}
+\PYG{l+s+sd}{    :param get\PYGZus{}currently\PYGZus{}known\PYGZus{}invariant: used to obtain the strongest invariant currently}
+\PYG{l+s+sd}{        available via a concurrently running (external) auxiliary\PYGZhy{}invariant generator}
+\PYG{l+s+sd}{    :param pd: boolean flag pd (reminding of “property\PYGZhy{}directed”) is used to control}
+\PYG{l+s+sd}{        whether failed induction checks are used to guide the algorithm towards a}
+\PYG{l+s+sd}{        sufficient strengthening of the safety property P to prove correctness; if pd is}
+\PYG{l+s+sd}{        set to false, the algorithm behaves exactly like standard k\PYGZhy{}induction.}
+\PYG{l+s+sd}{    :param lift: Given a failed attempt to prove some candidate invariant :math:`Q` by}
+\PYG{l+s+sd}{        induction, the function lift is used to obtain from a concrete}
+\PYG{l+s+sd}{        counterexample\PYGZhy{}to\PYGZhy{}induction (CTI) state a set of CTI states described by a state}
+\PYG{l+s+sd}{        predicate C. An implementation of the function :math:`k ∈ ℕ, \PYGZbs{}\PYGZbs{}Inv ∈ ℕ × (S →}
+\PYG{l+s+sd}{        ��) × (S → ��) × S → (S → ��)` and :math:`C = \PYGZbs{}\PYGZbs{}lift(k, \PYGZbs{}\PYGZbs{}Inv , Q, s)`, lift needs to}
+\PYG{l+s+sd}{        satisfy the condition that for a CTI :math:`s ∈ S` where :math:`S` is the set of}
+\PYG{l+s+sd}{        program states, the following holds:}
+
+\PYG{l+s+sd}{        .. math:: C(s) ∧ \PYGZbs{}\PYGZbs{}left( ∀s\PYGZus{}n ∈ S: C(s\PYGZus{}n) ⇒\PYGZbs{}}
+\PYG{l+s+sd}{            \PYGZbs{}\PYGZbs{}Inv(s\PYGZus{}n) ∧}
+\PYG{l+s+sd}{            \PYGZbs{}\PYGZbs{}displaystyle\PYGZbs{}\PYGZbs{}bigwedge\PYGZus{}\PYGZob{}i=n\PYGZcb{}\PYGZca{}\PYGZob{}n+k−1\PYGZcb{} (Q(s\PYGZus{}i) ∧ T(s\PYGZus{}i ,s\PYGZus{}\PYGZob{}i+1\PYGZcb{})) ⇒ ¬Q(s\PYGZus{}\PYGZob{}n+k\PYGZcb{}) \PYGZbs{}\PYGZbs{}right)}
+
+\PYG{l+s+sd}{        which means that the CTI s must be an element of the set of states described by}
+\PYG{l+s+sd}{        the resulting predicate C and that all states in this set must be CTIs, i.e.,}
+\PYG{l+s+sd}{        they need to be k\PYGZhy{}predecessors of :math:`¬Q`\PYGZhy{}states, or in other words,}
+\PYG{l+s+sd}{        each state in the set of states described by the predicate :math:`C` must reach}
+\PYG{l+s+sd}{        some :math:`¬Q`\PYGZhy{}state via :math:`k` unrollings of the transition relation}
+\PYG{l+s+sd}{        :math:`T`.}
+\PYG{l+s+sd}{    :param strengthen: The function strengthen: :math:`ℕ × (S → ��) × (S → ��) → (S →}
+\PYG{l+s+sd}{        ��)` is used to obtain for a k\PYGZhy{}inductive invariant a stronger k\PYGZhy{}inductive}
+\PYG{l+s+sd}{        invariant, i.e., its result needs to imply the input invariant, and, just like the}
+\PYG{l+s+sd}{        input invariant, it must not be violated within k loop iterations and must be}
+\PYG{l+s+sd}{        k\PYGZhy{}inductive.}
+\PYG{l+s+sd}{    :return: `True` if `P` holds, `Status.UNKNOWN` if `k \PYGZgt{} k\PYGZus{}max` , `False` otherwise.}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+    \PYG{c+c1}{\PYGZsh{} current bound}
+    \PYG{n}{k}\PYG{p}{:} \PYG{n+nb}{int} \PYG{o}{=} \PYG{n}{k\PYGZus{}init}
+
+    \PYG{c+c1}{\PYGZsh{} the invariant computed by this algorithm internally}
+    \PYG{n}{InternalInv}\PYG{p}{:} \PYG{n}{FNode} \PYG{o}{=} \PYG{n}{TRUE}\PYG{p}{()}
+
+    \PYG{c+c1}{\PYGZsh{} the set of current proof obligations.}
+    \PYG{n}{O}\PYG{p}{:} \PYG{n}{Set}\PYG{p}{[}\PYG{n}{Predicate}\PYG{p}{]} \PYG{o}{=} \PYG{n+nb}{set}\PYG{p}{()}
+
+    \PYG{k}{while} \PYG{n}{k} \PYG{o}{\PYGZlt{}=} \PYG{n}{k\PYGZus{}max}\PYG{p}{:}
+        \PYG{n}{O\PYGZus{}prev}\PYG{p}{:} \PYG{n}{Set}\PYG{p}{[}\PYG{n}{Predicate}\PYG{p}{]} \PYG{o}{=} \PYG{n}{O}
+        \PYG{n}{O} \PYG{o}{=} \PYG{n+nb}{set}\PYG{p}{()}
+
+        \PYG{c+c1}{\PYGZsh{} begin: base\PYGZhy{}case check (BMC)}
+        \PYG{c+c1}{\PYGZsh{}}
+        \PYG{c+c1}{\PYGZsh{} Base Case. The base case of k\PYGZhy{}induction consists of running BMC with the}
+        \PYG{c+c1}{\PYGZsh{} current bound k. This means that starting from all initial program states, all}
+        \PYG{c+c1}{\PYGZsh{} states of the program reachable within at most k−1 unwindings of the transition}
+        \PYG{c+c1}{\PYGZsh{} relation are explored. If a ¬P\PYGZhy{}state is found, the algorithm terminates.}
+        \PYG{n}{base\PYGZus{}case} \PYG{o}{=} \PYG{n}{get\PYGZus{}base\PYGZus{}case}\PYG{p}{(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{I}\PYG{p}{,} \PYG{n}{T}\PYG{p}{,} \PYG{n}{P}\PYG{p}{)}
+        \PYG{k}{if} \PYG{n}{m} \PYG{o}{:=} \PYG{n}{get\PYGZus{}model}\PYG{p}{(}\PYG{n}{base\PYGZus{}case}\PYG{p}{):}
+            \PYG{k}{if} \PYG{n}{print\PYGZus{}info}\PYG{p}{:}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] base\PYGZhy{}case check failed\PYGZdq{}}\PYG{p}{)}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{INDENT}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{Counterexample:\PYGZdq{}}\PYG{p}{)}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{textwrap}\PYG{o}{.}\PYG{n}{indent}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{str\PYGZus{}model}\PYG{p}{(}\PYG{n}{m}\PYG{p}{)}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{INDENT}\PYG{p}{))}
+                \PYG{c+c1}{\PYGZsh{} print(textwrap.indent(f\PYGZdq{}\PYGZob{}m\PYGZcb{}\PYGZdq{}, INDENT))}
+            \PYG{k}{return} \PYG{k+kc}{False}
+        \PYG{c+c1}{\PYGZsh{} end \PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}}
+
+        \PYG{c+c1}{\PYGZsh{} begin: forward\PYGZhy{}condition check (as described in Sec. 2)}
+        \PYG{c+c1}{\PYGZsh{}}
+        \PYG{c+c1}{\PYGZsh{} Forward Condition. If no ¬P\PYGZhy{}state is found by the BMC in the base case, the}
+        \PYG{c+c1}{\PYGZsh{} algorithm continues by performing the forward\PYGZhy{}condition check, which attempts}
+        \PYG{c+c1}{\PYGZsh{} to prove that BMC fully explored the state space of the program by checking}
+        \PYG{c+c1}{\PYGZsh{} that no state with distance k′ \PYGZgt{} k−1 to the initial state is reachable. If this}
+        \PYG{c+c1}{\PYGZsh{} check is successful, the algorithm terminates.}
+        \PYG{n}{forward\PYGZus{}condition} \PYG{o}{=} \PYG{n}{I}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{\PYGZam{}} \PYG{n}{T}\PYG{p}{[:}\PYG{n}{k} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{]}
+        \PYG{k}{if} \PYG{n}{is\PYGZus{}unsat}\PYG{p}{(}\PYG{n}{forward\PYGZus{}condition}\PYG{p}{):}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] Proved correctness: successful forward condition check\PYGZdq{}}\PYG{p}{)}
+            \PYG{n}{pprint}\PYG{p}{(}\PYG{n}{forward\PYGZus{}condition}\PYG{o}{.}\PYG{n}{serialize}\PYG{p}{())}
+            \PYG{k}{return} \PYG{k+kc}{True}
+        \PYG{c+c1}{\PYGZsh{} end \PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}}
+
+        \PYG{c+c1}{\PYGZsh{} begin: attempt to prove each proof obligation using k\PYGZhy{}induction}
+        \PYG{k}{if} \PYG{n}{pd}\PYG{p}{:}
+            \PYG{k}{for} \PYG{n}{o} \PYG{o+ow}{in} \PYG{n}{O\PYGZus{}prev}\PYG{p}{:}
+                \PYG{c+c1}{\PYGZsh{} begin: check the base case for a proof obligation o}
+                \PYG{n}{base\PYGZus{}case\PYGZus{}o} \PYG{o}{=} \PYG{n}{get\PYGZus{}base\PYGZus{}case}\PYG{p}{(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{I}\PYG{p}{,} \PYG{n}{T}\PYG{p}{,} \PYG{n}{o}\PYG{p}{)}
+                \PYG{k}{if} \PYG{n}{is\PYGZus{}sat}\PYG{p}{(}\PYG{n}{base\PYGZus{}case\PYGZus{}o}\PYG{p}{):}
+                    \PYG{c+c1}{\PYGZsh{} If any violations of the proof obligation o are found, this means}
+                    \PYG{c+c1}{\PYGZsh{} that a predecessor state of a ¬P\PYGZhy{}state, and thus, transitively,}
+                    \PYG{c+c1}{\PYGZsh{} a ¬P \PYGZhy{}state, is reachable, so we return false.}
+                    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] Found violation for proof obligation }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{o}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+                    \PYG{k}{return} \PYG{k+kc}{False}
+                \PYG{c+c1}{\PYGZsh{} end \PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}}
+
+                \PYG{k}{else}\PYG{p}{:}
+                    \PYG{c+c1}{\PYGZsh{} no violation was found}
+
+                    \PYG{c+c1}{\PYGZsh{} begin: check the inductive\PYGZhy{}step case to prove o}
+                    \PYG{c+c1}{\PYGZsh{}}
+                    \PYG{c+c1}{\PYGZsh{} Inductive\PYGZhy{}Step Case. The forward\PYGZhy{}condition check, however,}
+                    \PYG{c+c1}{\PYGZsh{} can only prove safety for programs with finite (and, in practice}
+                    \PYG{c+c1}{\PYGZsh{} short) loops. To prove safety beyond the bound k, the algorithm}
+                    \PYG{c+c1}{\PYGZsh{} applies induction: The inductive\PYGZhy{}step case attempts to prove tha}
+                    \PYG{c+c1}{\PYGZsh{} after every sequence of k unrollings of the transition relation}
+                    \PYG{c+c1}{\PYGZsh{} that did not reach a ¬P\PYGZhy{}state, there can also be no subsequent}
+                    \PYG{c+c1}{\PYGZsh{} transition into a ¬P\PYGZhy{}state by unwinding the transition relation}
+                    \PYG{c+c1}{\PYGZsh{} once more. In the realm of model checking of software, however,}
+                    \PYG{c+c1}{\PYGZsh{} the safety property P is often not directly k\PYGZhy{}inductive for any}
+                    \PYG{c+c1}{\PYGZsh{} value of k, thus causing the inductive\PYGZhy{}step\PYGZhy{}case check to fail.}
+                    \PYG{c+c1}{\PYGZsh{} It is therefore state\PYGZhy{}of\PYGZhy{}the\PYGZhy{}art practice to add auxiliary}
+                    \PYG{c+c1}{\PYGZsh{} invariants to this check to further strengthen the induction}
+                    \PYG{c+c1}{\PYGZsh{} hypothesis and make it more likely to succeed. Thus,}
+                    \PYG{c+c1}{\PYGZsh{} the inductive\PYGZhy{}step case proves a program safe if the following}
+                    \PYG{c+c1}{\PYGZsh{} condition is unsatisfiable:}
+                    \PYG{c+c1}{\PYGZsh{}}
+                    \PYG{c+c1}{\PYGZsh{}   Inv(s\PYGZus{}n) ⋀\PYGZus{}\PYGZob{}i=n\PYGZcb{}\PYGZca{}\PYGZob{}n+k\PYGZhy{}1\PYGZcb{}(P(s\PYGZus{}i) ∧ T(s\PYGZus{}i,s\PYGZus{}\PYGZob{}i+1\PYGZcb{})) ∧ ¬P(s\PYGZus{}\PYGZob{}n+k\PYGZcb{})}
+                    \PYG{c+c1}{\PYGZsh{}}
+                    \PYG{c+c1}{\PYGZsh{} where Inv is an auxiliary invariant, and sₙ,…,sₙ₊ₖ is any}
+                    \PYG{c+c1}{\PYGZsh{} sequence of states. If this check fails, the induction attempt is}
+                    \PYG{c+c1}{\PYGZsh{} inconclusive, and the program is neither proved safe nor unsafe}
+                    \PYG{c+c1}{\PYGZsh{} yet with the current value of k and the given auxiliary}
+                    \PYG{c+c1}{\PYGZsh{} invariant. In this case, the algorithm increases the value of k}
+                    \PYG{c+c1}{\PYGZsh{} and starts over.}
+                    \PYG{n}{step\PYGZus{}case\PYGZus{}o\PYGZus{}n} \PYG{o}{=} \PYG{n}{get\PYGZus{}step\PYGZus{}case}\PYG{p}{(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{T}\PYG{p}{,} \PYG{n}{o}\PYG{p}{)}
+                    \PYG{n}{ExternalInv} \PYG{o}{=} \PYG{n}{get\PYGZus{}currently\PYGZus{}known\PYGZus{}invariant}\PYG{p}{()}
+                    \PYG{n}{Inv} \PYG{o}{=} \PYG{n}{Predicate}\PYG{p}{(}\PYG{n}{InternalInv} \PYG{o}{\PYGZam{}} \PYG{n}{ExternalInv}\PYG{p}{)}
+                    \PYG{k}{if} \PYG{n}{m} \PYG{o}{:=} \PYG{n}{get\PYGZus{}model}\PYG{p}{(}\PYG{n}{Inv}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{\PYGZam{}} \PYG{n}{step\PYGZus{}case\PYGZus{}o\PYGZus{}n}\PYG{p}{):}
+                        \PYG{n}{s\PYGZus{}o} \PYG{o}{=} \PYG{n}{Predicate}\PYG{p}{(}\PYG{n}{get\PYGZus{}assignment\PYGZus{}as\PYGZus{}formula\PYGZus{}from\PYGZus{}model}\PYG{p}{(}\PYG{n}{m}\PYG{p}{))}
+                        \PYG{n}{predicate\PYGZus{}describing\PYGZus{}set\PYGZus{}of\PYGZus{}CTI\PYGZus{}states} \PYG{o}{=} \PYG{n}{lift}\PYG{p}{(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{Inv}\PYG{p}{,} \PYG{n}{P}\PYG{p}{,} \PYG{n}{s\PYGZus{}o}\PYG{p}{,} \PYG{n}{T}\PYG{p}{)}
+                        \PYG{k}{if} \PYG{n}{predicate\PYGZus{}describing\PYGZus{}set\PYGZus{}of\PYGZus{}CTI\PYGZus{}states}\PYG{p}{:}
+                            \PYG{n}{O} \PYG{o}{=} \PYG{n}{O}\PYG{o}{.}\PYG{n}{union}\PYG{p}{(}\PYG{n}{Not}\PYG{p}{(}\PYG{n}{predicate\PYGZus{}describing\PYGZus{}set\PYGZus{}of\PYGZus{}CTI\PYGZus{}states}\PYG{p}{))}
+                    \PYG{k}{else}\PYG{p}{:}
+                        \PYG{c+c1}{\PYGZsh{} If the step\PYGZhy{}case check for o is successful,}
+                        \PYG{c+c1}{\PYGZsh{} we no longer track o in the set O of unproven proof obligations.}
+
+                        \PYG{c+c1}{\PYGZsh{} We could now directly use the proof obligation as an}
+                        \PYG{c+c1}{\PYGZsh{} invariant, but instead, we first try to strengthen it into a}
+                        \PYG{c+c1}{\PYGZsh{} stronger invariant that removes even more unreachable states}
+                        \PYG{c+c1}{\PYGZsh{} from future consideration before conjoining it to our}
+                        \PYG{c+c1}{\PYGZsh{} internally computed auxiliary invariant. In our}
+                        \PYG{c+c1}{\PYGZsh{} implementation, we implement strengthen by attempting to drop}
+                        \PYG{c+c1}{\PYGZsh{} components from a (disjunctive) invariant and checking if the}
+                        \PYG{c+c1}{\PYGZsh{} remaining clause is still inductive.}
+                        \PYG{n}{InternalInv} \PYG{o}{\PYGZam{}=} \PYG{n}{strengthen}\PYG{p}{(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{Inv}\PYG{p}{,} \PYG{n}{o}\PYG{p}{)}
+                    \PYG{c+c1}{\PYGZsh{} end \PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}}
+        \PYG{c+c1}{\PYGZsh{} end: attempt to prove each proof obligation using k\PYGZhy{}induction}
+
+        \PYG{c+c1}{\PYGZsh{} begin: check the inductive\PYGZhy{}step case for the safety property P}
+        \PYG{c+c1}{\PYGZsh{}}
+        \PYG{c+c1}{\PYGZsh{} This check is mostly analogous to the inductive\PYGZhy{}step case check for the proof}
+        \PYG{c+c1}{\PYGZsh{} obligations described above, except that if the check is successful,}
+        \PYG{c+c1}{\PYGZsh{} we immediately return true.}
+
+        \PYG{c+c1}{\PYGZsh{} Assume for any iteration n (k iterations from n to n + k − 1 = n) that the}
+        \PYG{c+c1}{\PYGZsh{} safety property holds, and from this assumption attempt to conclude that the}
+        \PYG{c+c1}{\PYGZsh{} safety property will also hold in the next iteration n + 1 (n + k).}
+        \PYG{n}{step\PYGZus{}case\PYGZus{}n} \PYG{o}{=} \PYG{n}{get\PYGZus{}step\PYGZus{}case}\PYG{p}{(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{T}\PYG{p}{,} \PYG{n}{P}\PYG{p}{)}
+        \PYG{n}{ExternalInv} \PYG{o}{=} \PYG{n}{get\PYGZus{}currently\PYGZus{}known\PYGZus{}invariant}\PYG{p}{()}
+        \PYG{n}{Inv} \PYG{o}{=} \PYG{n}{Predicate}\PYG{p}{(}\PYG{n}{InternalInv} \PYG{o}{\PYGZam{}} \PYG{n}{ExternalInv}\PYG{p}{)}
+        \PYG{k}{if} \PYG{n}{m} \PYG{o}{:=} \PYG{n}{get\PYGZus{}model}\PYG{p}{(}\PYG{n}{Inv}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{\PYGZam{}} \PYG{n}{step\PYGZus{}case\PYGZus{}n}\PYG{p}{):}
+            \PYG{k}{if} \PYG{n}{pd}\PYG{p}{:}
+                \PYG{n}{s} \PYG{o}{=} \PYG{n}{get\PYGZus{}assignment\PYGZus{}as\PYGZus{}formula\PYGZus{}from\PYGZus{}model}\PYG{p}{(}\PYG{n}{m}\PYG{p}{)}
+                \PYG{c+c1}{\PYGZsh{} Try to lift this state to a more abstract state that still satisfies}
+                \PYG{c+c1}{\PYGZsh{} the property that all of its successors violate the safety property.}
+                \PYG{k}{if} \PYG{n}{abstract\PYGZus{}state} \PYG{o}{:=} \PYG{n}{lift}\PYG{p}{(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{Inv}\PYG{p}{,} \PYG{n}{P}\PYG{p}{,} \PYG{n}{Predicate}\PYG{p}{(}\PYG{n}{s}\PYG{p}{),} \PYG{n}{T}\PYG{p}{):}
+                    \PYG{c+c1}{\PYGZsh{} Negate this abstract state to obtain the proof obligation.}
+                    \PYG{c+c1}{\PYGZsh{} This means that we have learned that we should prove the}
+                    \PYG{c+c1}{\PYGZsh{} invariant ¬o, such that in future induction checks, we can remove}
+                    \PYG{c+c1}{\PYGZsh{} all states that satisfy `o` from the set of predecessor states}
+                    \PYG{c+c1}{\PYGZsh{} that need to be considered.}
+                    \PYG{n}{O} \PYG{o}{=} \PYG{n}{O}\PYG{o}{.}\PYG{n}{union}\PYG{p}{(}\PYG{n}{Not}\PYG{p}{(}\PYG{n}{abstract\PYGZus{}state}\PYG{p}{))}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] Proved correctness: safety property is inductive\PYGZdq{}}\PYG{p}{)}
+            \PYG{k}{return} \PYG{k+kc}{True}
+        \PYG{c+c1}{\PYGZsh{} end \PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}}
+
+        \PYG{n}{k} \PYG{o}{=} \PYG{n}{inc}\PYG{p}{(}\PYG{n}{k}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Property\PYGZsq{}s status is unknown: exceeded maximum number of iterations\PYGZdq{}}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{Status}\PYG{o}{.}\PYG{n}{UNKNOWN}
+\end{Verbatim}

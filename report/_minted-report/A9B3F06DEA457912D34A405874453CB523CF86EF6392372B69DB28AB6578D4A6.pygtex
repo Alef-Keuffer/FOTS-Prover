@@ -1,0 +1,64 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{IMC}\PYG{p}{(}\PYG{n}{TS}\PYG{p}{:} \PYG{n}{TransitionSystem}\PYG{p}{,}
+        \PYG{n}{P}\PYG{p}{:} \PYG{n}{FNode}\PYG{p}{,}
+        \PYG{n}{S}\PYG{o}{=}\PYG{k+kc}{None}\PYG{p}{,}
+        \PYG{n}{customInterpolator}\PYG{o}{=}\PYG{k+kc}{False}\PYG{p}{):}
+
+    \PYG{k}{if} \PYG{o+ow}{not} \PYG{n}{S}\PYG{p}{:}
+        \PYG{n}{S} \PYG{o}{=} \PYG{n}{TS}\PYG{o}{.}\PYG{n}{init}
+
+    \PYG{c+c1}{\PYGZsh{} first makes sure P is not violated by S}
+    \PYG{k}{if} \PYG{n}{m} \PYG{o}{:=} \PYG{n}{get\PYGZus{}model}\PYG{p}{(}\PYG{n}{S} \PYG{o}{\PYGZam{}} \PYG{n}{Not}\PYG{p}{(}\PYG{n}{P}\PYG{p}{)):}
+        \PYG{c+c1}{\PYGZsh{} halt return a counterexample}
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{m}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n}{Status}\PYG{o}{.}\PYG{n}{UNSAFE1}
+
+    \PYG{c+c1}{\PYGZsh{} bound}
+    \PYG{n}{k} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+    \PYG{c+c1}{\PYGZsh{} overapproximation of states at distance at most i from S}
+    \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{R\PYGZus{}i} \PYG{o}{=} \PYG{n}{S}\PYG{o}{.}\PYG{n}{substitute}\PYG{p}{(}\PYG{n}{TS}\PYG{o}{.}\PYG{n}{get\PYGZus{}subs}\PYG{p}{(}\PYG{n}{i}\PYG{p}{))}
+
+    \PYG{c+c1}{\PYGZsh{} for a bound k and a current overapproximation R(i) of the states at distance at}
+    \PYG{c+c1}{\PYGZsh{} most i from S, the algorithm checks if P is violated by the states reachable}
+    \PYG{c+c1}{\PYGZsh{} from R(i) in at most k steps.}
+    \PYG{k}{while} \PYG{k+kc}{True}\PYG{p}{:}
+        \PYG{n}{A} \PYG{o}{=} \PYG{n}{R\PYGZus{}i} \PYG{o}{\PYGZam{}} \PYG{n}{TS}\PYG{o}{.}\PYG{n}{get\PYGZus{}unrolling}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)}
+        \PYG{n}{B} \PYG{o}{=} \PYG{n}{And}\PYG{p}{(}\PYG{n}{And}\PYG{p}{(}\PYG{n}{TS}\PYG{o}{.}\PYG{n}{get\PYGZus{}unrolling}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{k}\PYG{p}{)),} \PYG{n}{Or}\PYG{p}{(}\PYG{n}{get\PYGZus{}unrolling}\PYG{p}{(}\PYG{n}{Not}\PYG{p}{(}\PYG{n}{P}\PYG{p}{),} \PYG{n}{k}\PYG{p}{)))}
+        \PYG{k}{if} \PYG{n}{m} \PYG{o}{:=} \PYG{n}{is\PYGZus{}sat}\PYG{p}{(}\PYG{n}{A} \PYG{o}{\PYGZam{}} \PYG{n}{B}\PYG{p}{):}
+            \PYG{c+c1}{\PYGZsh{} the error might be real or spurious, caused by an insufficient value of k}
+            \PYG{k}{if} \PYG{n}{is\PYGZus{}valid}\PYG{p}{(}\PYG{n}{R\PYGZus{}i}\PYG{o}{.}\PYG{n}{EqualsOrIff}\PYG{p}{(}\PYG{n}{S}\PYG{p}{)):}
+                \PYG{c+c1}{\PYGZsh{} error is real so the system is unsafe}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{m}\PYG{p}{)}
+                \PYG{k}{return} \PYG{n}{Status}\PYG{o}{.}\PYG{n}{UNSAFE2}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{c+c1}{\PYGZsh{} error is spurious so k is increased to allow finer}
+                \PYG{c+c1}{\PYGZsh{} overapproximations, and the algorithm restarts from S.}
+                \PYG{n}{k} \PYG{o}{+=} \PYG{l+m+mi}{1}
+                \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}
+                \PYG{n}{R\PYGZus{}i} \PYG{o}{=} \PYG{n}{S}\PYG{o}{.}\PYG{n}{substitute}\PYG{p}{(}\PYG{n}{TS}\PYG{o}{.}\PYG{n}{get\PYGZus{}subs}\PYG{p}{(}\PYG{n}{i}\PYG{p}{))}
+        \PYG{c+c1}{\PYGZsh{} R(i) ⋀\PYGZus{}\PYGZob{}j=0\PYGZcb{}\PYGZca{}\PYGZob{}k−1\PYGZcb{} T\PYGZca{}j ⋁\PYGZus{}\PYGZob{}l=0\PYGZcb{}\PYGZca{}k ¬P\PYGZca{}l is unsat}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{c+c1}{\PYGZsh{} an interpolant I(i) is computed, which represents an approximation of the}
+            \PYG{c+c1}{\PYGZsh{} image of R(i) (i.e., of the states reachable from R(i) in one step).}
+            \PYG{k}{if} \PYG{n}{customInterpolator}\PYG{p}{:}
+                \PYG{n}{I\PYGZus{}i} \PYG{o}{=} \PYG{n}{bin\PYGZus{}itp}\PYG{p}{(}\PYG{n}{A}\PYG{p}{,} \PYG{n}{B}\PYG{p}{)}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n}{I\PYGZus{}i} \PYG{o}{=} \PYG{n}{binary\PYGZus{}interpolant}\PYG{p}{(}\PYG{n}{A}\PYG{p}{,} \PYG{n}{B}\PYG{p}{)}
+
+            \PYG{c+c1}{\PYGZsh{} a fixpoint check is carried out: if I(i) |= R(i), it means that all}
+            \PYG{c+c1}{\PYGZsh{} states have been covered, and the system is safe; otherwise, R(i + 1) is}
+            \PYG{c+c1}{\PYGZsh{} set to R(i) ∨ I(i) and the procedure continues.}
+            \PYG{k}{if} \PYG{n}{is\PYGZus{}valid}\PYG{p}{(}\PYG{n}{I\PYGZus{}i}\PYG{o}{.}\PYG{n}{Implies}\PYG{p}{(}\PYG{n}{R\PYGZus{}i}\PYG{p}{)):}
+                \PYG{c+c1}{\PYGZsh{} the current R(i) corresponds to an inductive invariant P̂ stronger}
+                \PYG{c+c1}{\PYGZsh{} than P: on one side, S |= R(i), moreover R(i) ∧ T |= I\PYGZsq{}(i) and I(i)}
+                \PYG{c+c1}{\PYGZsh{} |= R(i) imply R(i) ∧ T |= R\PYGZsq{}(i); on the other side, the fact that at}
+                \PYG{c+c1}{\PYGZsh{} each iteration 0 ≤ h ≤ i, R(h) ∧ ⋀\PYGZus{}\PYGZob{}j=0\PYGZcb{}\PYGZca{}\PYGZob{}k−1\PYGZcb{} T |= ⋀\PYGZus{}\PYGZob{}l=0\PYGZcb{}\PYGZca{}k P\PYGZca{}l,}
+                \PYG{c+c1}{\PYGZsh{} together with R(i) being an inductive invariant, yield R(i) |= P.}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Proved at step }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+                \PYG{k}{return} \PYG{n}{Status}\PYG{o}{.}\PYG{n}{SAFE}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n}{R\PYGZus{}i} \PYG{o}{=} \PYG{n}{R\PYGZus{}i} \PYG{o}{|} \PYG{n}{I\PYGZus{}i}
+                \PYG{n}{i} \PYG{o}{+=} \PYG{l+m+mi}{1}
+\end{Verbatim}

@@ -1,0 +1,87 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{PDR}\PYG{p}{(}\PYG{n}{I}\PYG{p}{:} \PYG{n}{Predicate}\PYG{p}{,}
+        \PYG{n}{T}\PYG{p}{:} \PYG{n}{Predicate}\PYG{p}{,}
+        \PYG{n}{P}\PYG{p}{:} \PYG{n}{Predicate}\PYG{p}{,}
+        \PYG{n}{get\PYGZus{}currently\PYGZus{}known\PYGZus{}invariant}\PYG{o}{=}\PYG{k}{lambda}\PYG{p}{:} \PYG{n}{TRUE}\PYG{p}{(),}
+        \PYG{n}{strengthen}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{k}\PYG{p}{,} \PYG{n}{Inv}\PYG{p}{,} \PYG{n}{o}\PYG{p}{:} \PYG{n}{Inv}\PYG{p}{,}
+        \PYG{n}{lift}\PYG{o}{=}\PYG{n}{\PYGZus{}lift}\PYG{p}{,}
+        \PYG{n}{k\PYGZus{}init}\PYG{p}{:} \PYG{n+nb}{int} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{,}
+        \PYG{n}{k\PYGZus{}max}\PYG{p}{:} \PYG{n+nb}{int} \PYG{o}{=} \PYG{n+nb}{float}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}inf\PYGZsq{}}\PYG{p}{),}
+        \PYG{n}{pd}\PYG{p}{:} \PYG{n+nb}{bool} \PYG{o}{=} \PYG{k+kc}{True}\PYG{p}{,}
+        \PYG{n}{inc}\PYG{p}{:} \PYG{n}{Callable}\PYG{p}{[[}\PYG{n+nb}{int}\PYG{p}{],} \PYG{n+nb}{int}\PYG{p}{]} \PYG{o}{=} \PYG{k}{lambda} \PYG{n}{n}\PYG{p}{:} \PYG{n}{n} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{,}
+        \PYG{n}{print\PYGZus{}info}\PYG{o}{=}\PYG{k+kc}{True}
+        \PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n+nb}{bool} \PYG{o}{|} \PYG{n}{Status}\PYG{p}{:}
+    \PYG{n}{k}\PYG{p}{:} \PYG{n+nb}{int} \PYG{o}{=} \PYG{n}{k\PYGZus{}init}
+
+    \PYG{n}{InternalInv}\PYG{p}{:} \PYG{n}{FNode} \PYG{o}{=} \PYG{n}{TRUE}\PYG{p}{()}
+
+    \PYG{n}{O}\PYG{p}{:} \PYG{n}{Set}\PYG{p}{[}\PYG{n}{Predicate}\PYG{p}{]} \PYG{o}{=} \PYG{n+nb}{set}\PYG{p}{()}
+
+    \PYG{k}{while} \PYG{n}{k} \PYG{o}{\PYGZlt{}=} \PYG{n}{k\PYGZus{}max}\PYG{p}{:}
+        \PYG{n}{O\PYGZus{}prev}\PYG{p}{:} \PYG{n}{Set}\PYG{p}{[}\PYG{n}{Predicate}\PYG{p}{]} \PYG{o}{=} \PYG{n}{O}
+        \PYG{n}{O} \PYG{o}{=} \PYG{n+nb}{set}\PYG{p}{()}
+
+        \PYG{c+c1}{\PYGZsh{} begin: base\PYGZhy{}case check (BMC)}
+        \PYG{n}{base\PYGZus{}case} \PYG{o}{=} \PYG{n}{get\PYGZus{}base\PYGZus{}case}\PYG{p}{(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{I}\PYG{p}{,} \PYG{n}{T}\PYG{p}{,} \PYG{n}{P}\PYG{p}{)}
+        \PYG{k}{if} \PYG{n}{m} \PYG{o}{:=} \PYG{n}{get\PYGZus{}model}\PYG{p}{(}\PYG{n}{base\PYGZus{}case}\PYG{p}{):}
+            \PYG{k}{if} \PYG{n}{print\PYGZus{}info}\PYG{p}{:}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] base\PYGZhy{}case check failed\PYGZdq{}}\PYG{p}{)}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{INDENT}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{Counterexample:\PYGZdq{}}\PYG{p}{)}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{textwrap}\PYG{o}{.}\PYG{n}{indent}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{str\PYGZus{}model}\PYG{p}{(}\PYG{n}{m}\PYG{p}{)}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{INDENT}\PYG{p}{))}
+            \PYG{k}{return} \PYG{k+kc}{False}
+        \PYG{c+c1}{\PYGZsh{} end \PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}}
+
+        \PYG{c+c1}{\PYGZsh{} begin: forward\PYGZhy{}condition check (as described in Sec. 2)}
+        \PYG{n}{forward\PYGZus{}condition} \PYG{o}{=} \PYG{n}{I}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{\PYGZam{}} \PYG{n}{T}\PYG{p}{[:}\PYG{n}{k} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{]}
+        \PYG{k}{if} \PYG{n}{is\PYGZus{}unsat}\PYG{p}{(}\PYG{n}{forward\PYGZus{}condition}\PYG{p}{):}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] Proved correctness: successful forward condition check\PYGZdq{}}\PYG{p}{)}
+            \PYG{n}{pprint}\PYG{p}{(}\PYG{n}{forward\PYGZus{}condition}\PYG{o}{.}\PYG{n}{serialize}\PYG{p}{())}
+            \PYG{k}{return} \PYG{k+kc}{True}
+        \PYG{c+c1}{\PYGZsh{} end \PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}}
+
+        \PYG{c+c1}{\PYGZsh{} begin: attempt to prove each proof obligation using k\PYGZhy{}induction}
+        \PYG{k}{if} \PYG{n}{pd}\PYG{p}{:}
+            \PYG{k}{for} \PYG{n}{o} \PYG{o+ow}{in} \PYG{n}{O\PYGZus{}prev}\PYG{p}{:}
+                \PYG{c+c1}{\PYGZsh{} begin: check the base case for a proof obligation o}
+                \PYG{n}{base\PYGZus{}case\PYGZus{}o} \PYG{o}{=} \PYG{n}{get\PYGZus{}base\PYGZus{}case}\PYG{p}{(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{I}\PYG{p}{,} \PYG{n}{T}\PYG{p}{,} \PYG{n}{o}\PYG{p}{)}
+                \PYG{k}{if} \PYG{n}{is\PYGZus{}sat}\PYG{p}{(}\PYG{n}{base\PYGZus{}case\PYGZus{}o}\PYG{p}{):}
+                    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] Found violation for proof obligation }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{o}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+                    \PYG{k}{return} \PYG{k+kc}{False}
+                \PYG{c+c1}{\PYGZsh{} end \PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}}
+
+                \PYG{k}{else}\PYG{p}{:}
+                    \PYG{c+c1}{\PYGZsh{} no violation was found}
+
+                    \PYG{c+c1}{\PYGZsh{} begin: check the inductive\PYGZhy{}step case to prove o}
+                    \PYG{n}{step\PYGZus{}case\PYGZus{}o\PYGZus{}n} \PYG{o}{=} \PYG{n}{get\PYGZus{}step\PYGZus{}case}\PYG{p}{(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{T}\PYG{p}{,} \PYG{n}{o}\PYG{p}{)}
+                    \PYG{n}{ExternalInv} \PYG{o}{=} \PYG{n}{get\PYGZus{}currently\PYGZus{}known\PYGZus{}invariant}\PYG{p}{()}
+                    \PYG{n}{Inv} \PYG{o}{=} \PYG{n}{Predicate}\PYG{p}{(}\PYG{n}{InternalInv} \PYG{o}{\PYGZam{}} \PYG{n}{ExternalInv}\PYG{p}{)}
+                    \PYG{k}{if} \PYG{n}{m} \PYG{o}{:=} \PYG{n}{get\PYGZus{}model}\PYG{p}{(}\PYG{n}{Inv}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{\PYGZam{}} \PYG{n}{step\PYGZus{}case\PYGZus{}o\PYGZus{}n}\PYG{p}{):}
+                        \PYG{n}{s\PYGZus{}o} \PYG{o}{=} \PYG{n}{Predicate}\PYG{p}{(}\PYG{n}{get\PYGZus{}assignment\PYGZus{}as\PYGZus{}formula\PYGZus{}from\PYGZus{}model}\PYG{p}{(}\PYG{n}{m}\PYG{p}{))}
+                        \PYG{n}{predicate\PYGZus{}describing\PYGZus{}set\PYGZus{}of\PYGZus{}CTI\PYGZus{}states} \PYG{o}{=} \PYG{n}{lift}\PYG{p}{(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{Inv}\PYG{p}{,} \PYG{n}{P}\PYG{p}{,} \PYG{n}{s\PYGZus{}o}\PYG{p}{,} \PYG{n}{T}\PYG{p}{)}
+                        \PYG{k}{if} \PYG{n}{predicate\PYGZus{}describing\PYGZus{}set\PYGZus{}of\PYGZus{}CTI\PYGZus{}states}\PYG{p}{:}
+                            \PYG{n}{O} \PYG{o}{=} \PYG{n}{O}\PYG{o}{.}\PYG{n}{union}\PYG{p}{(}\PYG{n}{Not}\PYG{p}{(}\PYG{n}{predicate\PYGZus{}describing\PYGZus{}set\PYGZus{}of\PYGZus{}CTI\PYGZus{}states}\PYG{p}{))}
+                    \PYG{k}{else}\PYG{p}{:}
+                        \PYG{n}{InternalInv} \PYG{o}{\PYGZam{}=} \PYG{n}{strengthen}\PYG{p}{(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{Inv}\PYG{p}{,} \PYG{n}{o}\PYG{p}{)}
+                    \PYG{c+c1}{\PYGZsh{} end \PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}}
+        \PYG{c+c1}{\PYGZsh{} end: attempt to prove each proof obligation using k\PYGZhy{}induction}
+
+        \PYG{c+c1}{\PYGZsh{} begin: check the inductive\PYGZhy{}step case for the safety property P}
+        \PYG{n}{step\PYGZus{}case\PYGZus{}n} \PYG{o}{=} \PYG{n}{get\PYGZus{}step\PYGZus{}case}\PYG{p}{(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{T}\PYG{p}{,} \PYG{n}{P}\PYG{p}{)}
+        \PYG{n}{ExternalInv} \PYG{o}{=} \PYG{n}{get\PYGZus{}currently\PYGZus{}known\PYGZus{}invariant}\PYG{p}{()}
+        \PYG{n}{Inv} \PYG{o}{=} \PYG{n}{Predicate}\PYG{p}{(}\PYG{n}{InternalInv} \PYG{o}{\PYGZam{}} \PYG{n}{ExternalInv}\PYG{p}{)}
+        \PYG{k}{if} \PYG{n}{m} \PYG{o}{:=} \PYG{n}{get\PYGZus{}model}\PYG{p}{(}\PYG{n}{Inv}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{\PYGZam{}} \PYG{n}{step\PYGZus{}case\PYGZus{}n}\PYG{p}{):}
+            \PYG{k}{if} \PYG{n}{pd}\PYG{p}{:}
+                \PYG{n}{s} \PYG{o}{=} \PYG{n}{get\PYGZus{}assignment\PYGZus{}as\PYGZus{}formula\PYGZus{}from\PYGZus{}model}\PYG{p}{(}\PYG{n}{m}\PYG{p}{)}
+                \PYG{c+c1}{\PYGZsh{} Try to lift this state to a more abstract state that still satisfies}
+                \PYG{c+c1}{\PYGZsh{} the property that all of its successors violate the safety property.}
+                \PYG{k}{if} \PYG{n}{abstract\PYGZus{}state} \PYG{o}{:=} \PYG{n}{lift}\PYG{p}{(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{Inv}\PYG{p}{,} \PYG{n}{P}\PYG{p}{,} \PYG{n}{Predicate}\PYG{p}{(}\PYG{n}{s}\PYG{p}{),} \PYG{n}{T}\PYG{p}{):}
+                    \PYG{n}{O} \PYG{o}{=} \PYG{n}{O}\PYG{o}{.}\PYG{n}{union}\PYG{p}{(}\PYG{n}{Not}\PYG{p}{(}\PYG{n}{abstract\PYGZus{}state}\PYG{p}{))}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] Proved correctness: safety property is inductive\PYGZdq{}}\PYG{p}{)}
+            \PYG{k}{return} \PYG{k+kc}{True}
+        \PYG{c+c1}{\PYGZsh{} end \PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}\PYGZsh{}}
+
+        \PYG{n}{k} \PYG{o}{=} \PYG{n}{inc}\PYG{p}{(}\PYG{n}{k}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Property\PYGZsq{}s status is unknown: exceeded maximum number of iterations\PYGZdq{}}\PYG{p}{)}
+\end{Verbatim}

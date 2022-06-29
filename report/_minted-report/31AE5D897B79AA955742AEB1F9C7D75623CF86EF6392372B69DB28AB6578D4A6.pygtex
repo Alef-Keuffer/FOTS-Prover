@@ -1,0 +1,49 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{IMC}\PYG{p}{(}\PYG{n}{S}\PYG{p}{:} \PYG{n}{Predicate}\PYG{p}{,}
+        \PYG{n}{T}\PYG{p}{:} \PYG{n}{Predicate}\PYG{p}{,}
+        \PYG{n}{P}\PYG{p}{:} \PYG{n}{Predicate}\PYG{p}{,}
+        \PYG{n}{interpolator}\PYG{p}{:} \PYG{n}{Callable}\PYG{p}{[[}\PYG{n}{FNode}\PYG{p}{,} \PYG{n}{FNode}\PYG{p}{],} \PYG{n}{FNode}\PYG{p}{]} \PYG{o}{=} \PYG{n}{binary\PYGZus{}interpolant}\PYG{p}{,}
+        \PYG{n}{print\PYGZus{}info}\PYG{p}{:} \PYG{n+nb}{bool} \PYG{o}{=} \PYG{k+kc}{True}\PYG{p}{):}
+
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Checking if initial states violates safety property\PYGZdq{}}\PYG{p}{)}
+    \PYG{k}{if} \PYG{n}{m} \PYG{o}{:=} \PYG{n}{get\PYGZus{}model}\PYG{p}{(}\PYG{n}{S}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{\PYGZam{}} \PYG{o}{\PYGZti{}}\PYG{n}{P}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]):}
+        \PYG{c+c1}{\PYGZsh{} halt return a counterexample}
+        \PYG{k}{if} \PYG{n}{print\PYGZus{}info}\PYG{p}{:}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[step 0] Initial state violates property:\PYGZdq{}}\PYG{p}{)}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{INDENT}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{Counterexample:\PYGZdq{}}\PYG{p}{)}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{textwrap}\PYG{o}{.}\PYG{n}{indent}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{m}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{INDENT}\PYG{p}{))}
+        \PYG{k}{return} \PYG{n}{Status}\PYG{o}{.}\PYG{n}{UNSAFE1}
+
+    \PYG{n}{k} \PYG{o}{=} \PYG{l+m+mi}{2}
+
+    \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{R} \PYG{o}{=} \PYG{n}{S}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+
+    \PYG{k}{while} \PYG{k+kc}{True}\PYG{p}{:}
+        \PYG{n}{A} \PYG{o}{=} \PYG{n}{R} \PYG{o}{\PYGZam{}} \PYG{n}{T}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+        \PYG{n}{B} \PYG{o}{=} \PYG{n}{T}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{:}\PYG{n}{k} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{\PYGZam{}} \PYG{n}{Or}\PYG{p}{(}\PYG{o}{\PYGZti{}}\PYG{n}{P}\PYG{p}{[}\PYG{n}{l}\PYG{p}{]} \PYG{k}{for} \PYG{n}{l} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{k} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{))}
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] Checking BMC from R(i)\PYGZdq{}}\PYG{p}{)}
+        \PYG{k}{if} \PYG{n}{m} \PYG{o}{:=} \PYG{n}{get\PYGZus{}model}\PYG{p}{(}\PYG{n}{A} \PYG{o}{\PYGZam{}} \PYG{n}{B}\PYG{p}{):}
+            \PYG{k}{if} \PYG{n}{is\PYGZus{}valid}\PYG{p}{(}\PYG{n}{EqualsOrIff}\PYG{p}{(}\PYG{n}{R}\PYG{p}{,} \PYG{n}{S}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{])):}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] Checking if R=S\PYGZdq{}}\PYG{p}{)}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{m}\PYG{p}{)}
+                \PYG{k}{return} \PYG{n}{Status}\PYG{o}{.}\PYG{n}{UNSAFE2}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] R != S\PYGZdq{}}\PYG{p}{)}
+                \PYG{n}{k} \PYG{o}{+=} \PYG{l+m+mi}{1}
+                \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}
+                \PYG{n}{R} \PYG{o}{=} \PYG{n}{S}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] Calculating interpolant\PYGZdq{}}\PYG{p}{)}
+            \PYG{n}{I} \PYG{o}{=} \PYG{n}{interpolator}\PYG{p}{(}\PYG{n}{A}\PYG{p}{,} \PYG{n}{B}\PYG{p}{)}
+
+            \PYG{k}{if} \PYG{n}{is\PYGZus{}valid}\PYG{p}{(}\PYG{n}{I}\PYG{o}{.}\PYG{n}{Implies}\PYG{p}{(}\PYG{n}{R}\PYG{p}{)):}
+                \PYG{k}{if} \PYG{n}{print\PYGZus{}info}\PYG{p}{:}
+                    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] Proved safety: all states have been covered, \PYGZdq{}}
+                          \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}and the system is safe\PYGZdq{}}\PYG{p}{)}
+                \PYG{k}{return} \PYG{n}{Status}\PYG{o}{.}\PYG{n}{SAFE}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] I !=\PYGZgt{} R\PYGZdq{}}\PYG{p}{)}
+                \PYG{n}{R} \PYG{o}{|=} \PYG{n}{I}
+                \PYG{n}{i} \PYG{o}{+=} \PYG{l+m+mi}{1}
+\end{Verbatim}

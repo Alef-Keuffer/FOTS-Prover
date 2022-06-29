@@ -1,0 +1,94 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{IMC}\PYG{p}{(}\PYG{n}{S}\PYG{p}{:} \PYG{n}{Predicate}\PYG{p}{,}
+        \PYG{n}{T}\PYG{p}{:} \PYG{n}{Predicate}\PYG{p}{,}
+        \PYG{n}{P}\PYG{p}{:} \PYG{n}{Predicate}\PYG{p}{,}
+        \PYG{n}{interpolator}\PYG{p}{:} \PYG{n}{Callable}\PYG{p}{[[}\PYG{n}{FNode}\PYG{p}{,} \PYG{n}{FNode}\PYG{p}{],} \PYG{n}{FNode}\PYG{p}{]} \PYG{o}{=} \PYG{n}{binary\PYGZus{}interpolant}\PYG{p}{,}
+        \PYG{n}{print\PYGZus{}info}\PYG{p}{:} \PYG{n+nb}{bool} \PYG{o}{=} \PYG{k+kc}{True}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    Interpolating Model Checking}
+
+\PYG{l+s+sd}{    As specified at S. Fulvio Rollini, “Craig Interpolation and Proof Manipulation:}
+\PYG{l+s+sd}{    Theory and Applications to Model Checking,” Università della Svizzera Italiana. p.}
+\PYG{l+s+sd}{    38. available at https://verify.inf.usi.ch/sites/default/files/RolliniPhDThesis.pdf}
+
+\PYG{l+s+sd}{    A property to be verified is encoded as a formula :math:`P` , so that the system is}
+\PYG{l+s+sd}{    safe if the error states where :math:`¬P` holds are not reachable from :math:`S`.}
+
+\PYG{l+s+sd}{    Verifying that the system satisfies :math:`P` reduces to prove}
+\PYG{l+s+sd}{    that :math:`P` is an inductive invariant property:}
+
+\PYG{l+s+sd}{    .. math:: S ⊨ P\PYGZbs{}\PYGZbs{}qquad P ∧ T ⊨ P\PYGZsq{}}
+
+\PYG{l+s+sd}{    If (i) the initial states satisfy :math:`P` and, (ii) assuming :math:`P` holds,}
+\PYG{l+s+sd}{    it also holds after applying the transition relation, then :math:`P` holds in all}
+\PYG{l+s+sd}{    reachable states. When the inductiveness of :math:`P` cannot be directly proved,}
+\PYG{l+s+sd}{    it might be possible to show that another formula :math:`\PYGZbs{}\PYGZbs{}hat P`, stronger than}
+\PYG{l+s+sd}{    :math:`P ( \PYGZbs{}\PYGZbs{}hat P ⊨ P )`, is an inductive invariant, from which :math:`P` would}
+\PYG{l+s+sd}{    follow as a consequence; this algorithm, which combines interpolation and bounded}
+\PYG{l+s+sd}{    model checking (BMC), is based on iteratively building such a :math:`\PYGZbs{}\PYGZbs{}hat P`.}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+    \PYG{c+c1}{\PYGZsh{} first makes sure P is not violated by S}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Checking if initial states violates safety property\PYGZdq{}}\PYG{p}{)}
+    \PYG{k}{if} \PYG{n}{m} \PYG{o}{:=} \PYG{n}{get\PYGZus{}model}\PYG{p}{(}\PYG{n}{S}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{\PYGZam{}} \PYG{o}{\PYGZti{}}\PYG{n}{P}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]):}
+        \PYG{c+c1}{\PYGZsh{} halt return a counterexample}
+        \PYG{k}{if} \PYG{n}{print\PYGZus{}info}\PYG{p}{:}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[step 0] Initial state violates property:\PYGZdq{}}\PYG{p}{)}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{INDENT}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{Counterexample:\PYGZdq{}}\PYG{p}{)}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{textwrap}\PYG{o}{.}\PYG{n}{indent}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{m}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{INDENT}\PYG{p}{))}
+        \PYG{k}{return} \PYG{n}{Status}\PYG{o}{.}\PYG{n}{UNSAFE1}
+
+    \PYG{c+c1}{\PYGZsh{} bound}
+    \PYG{n}{k} \PYG{o}{=} \PYG{l+m+mi}{2}
+
+    \PYG{c+c1}{\PYGZsh{} overapproximation of states at distance at most i from S}
+    \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{R} \PYG{o}{=} \PYG{n}{S}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+
+    \PYG{c+c1}{\PYGZsh{} for a bound k and a current overapproximation R(i) of the states at distance at}
+    \PYG{c+c1}{\PYGZsh{} most i from S, the algorithm checks if P is violated by the states reachable}
+    \PYG{c+c1}{\PYGZsh{} from R(i) in at most k steps.}
+    \PYG{k}{while} \PYG{k+kc}{True}\PYG{p}{:}
+        \PYG{n}{A} \PYG{o}{=} \PYG{n}{R} \PYG{o}{\PYGZam{}} \PYG{n}{T}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+        \PYG{n}{B} \PYG{o}{=} \PYG{n}{T}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{:}\PYG{n}{k} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{\PYGZam{}} \PYG{n}{Or}\PYG{p}{(}\PYG{o}{\PYGZti{}}\PYG{n}{P}\PYG{p}{[}\PYG{n}{l}\PYG{p}{]} \PYG{k}{for} \PYG{n}{l} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{k} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{))}
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] Checking BMC from R(i)\PYGZdq{}}\PYG{p}{)}
+        \PYG{k}{if} \PYG{n}{m} \PYG{o}{:=} \PYG{n}{get\PYGZus{}model}\PYG{p}{(}\PYG{n}{A} \PYG{o}{\PYGZam{}} \PYG{n}{B}\PYG{p}{):}
+            \PYG{c+c1}{\PYGZsh{} the error might be real or spurious, caused by an insufficient value of k}
+            \PYG{k}{if} \PYG{n}{is\PYGZus{}valid}\PYG{p}{(}\PYG{n}{EqualsOrIff}\PYG{p}{(}\PYG{n}{R}\PYG{p}{,} \PYG{n}{S}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{])):}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] Checking if R=S\PYGZdq{}}\PYG{p}{)}
+                \PYG{c+c1}{\PYGZsh{} error is real so the system is unsafe}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{m}\PYG{p}{)}
+                \PYG{k}{return} \PYG{n}{Status}\PYG{o}{.}\PYG{n}{UNSAFE2}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{c+c1}{\PYGZsh{} error is spurious so k is increased to allow finer}
+                \PYG{c+c1}{\PYGZsh{} overapproximations, and the algorithm restarts from S.}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] R != S\PYGZdq{}}\PYG{p}{)}
+                \PYG{n}{k} \PYG{o}{+=} \PYG{l+m+mi}{1}
+                \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}
+                \PYG{n}{R} \PYG{o}{=} \PYG{n}{S}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+        \PYG{c+c1}{\PYGZsh{} R(i) ⋀\PYGZus{}\PYGZob{}j=0\PYGZcb{}\PYGZca{}\PYGZob{}k−1\PYGZcb{} T\PYGZca{}j ⋁\PYGZus{}\PYGZob{}l=0\PYGZcb{}\PYGZca{}k ¬P\PYGZca{}l is unsat}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{c+c1}{\PYGZsh{} an interpolant I(i) is computed, which represents an approximation of the}
+            \PYG{c+c1}{\PYGZsh{} image of R(i) (i.e., of the states reachable from R(i) in one step).}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] Calculating interpolant\PYGZdq{}}\PYG{p}{)}
+            \PYG{n}{I} \PYG{o}{=} \PYG{n}{interpolator}\PYG{p}{(}\PYG{n}{A}\PYG{p}{,} \PYG{n}{B}\PYG{p}{)}
+
+            \PYG{c+c1}{\PYGZsh{} a fixpoint check is carried out: if I(i) |= R(i), it means that all}
+            \PYG{c+c1}{\PYGZsh{} states have been covered, and the system is safe; otherwise, R(i + 1) is}
+            \PYG{c+c1}{\PYGZsh{} set to R(i) ∨ I(i) and the procedure continues.}
+            \PYG{k}{if} \PYG{n}{is\PYGZus{}valid}\PYG{p}{(}\PYG{n}{I}\PYG{o}{.}\PYG{n}{Implies}\PYG{p}{(}\PYG{n}{R}\PYG{p}{)):}
+                \PYG{c+c1}{\PYGZsh{} the current R(i) corresponds to an inductive invariant P̂ stronger}
+                \PYG{c+c1}{\PYGZsh{} than P: on one side, S |= R(i), moreover R(i) ∧ T |= I\PYGZsq{}(i) and I(i)}
+                \PYG{c+c1}{\PYGZsh{} |= R(i) imply R(i) ∧ T |= R\PYGZsq{}(i); on the other side, the fact that at}
+                \PYG{c+c1}{\PYGZsh{} each iteration 0 ≤ h ≤ i, R(h) ∧ ⋀\PYGZus{}\PYGZob{}j=0\PYGZcb{}\PYGZca{}\PYGZob{}k−1\PYGZcb{} T |= ⋀\PYGZus{}\PYGZob{}l=0\PYGZcb{}\PYGZca{}k P\PYGZca{}l,}
+                \PYG{c+c1}{\PYGZsh{} together with R(i) being an inductive invariant, yield R(i) |= P.}
+                \PYG{k}{if} \PYG{n}{print\PYGZus{}info}\PYG{p}{:}
+                    \PYG{c+c1}{\PYGZsh{} print(f\PYGZdq{}R(\PYGZob{}i\PYGZcb{}) = \PYGZdq{}, R.simplify().serialize())}
+                    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] Proved safety: all states have been covered, \PYGZdq{}}
+                          \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}and the system is safe\PYGZdq{}}\PYG{p}{)}
+                \PYG{k}{return} \PYG{n}{Status}\PYG{o}{.}\PYG{n}{SAFE}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}[}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{k}\PYG{l+s+si}{=\PYGZcb{}}\PYG{l+s+s2}{] I !=\PYGZgt{} R\PYGZdq{}}\PYG{p}{)}
+                \PYG{n}{R} \PYG{o}{|=} \PYG{n}{I}
+                \PYG{n}{i} \PYG{o}{+=} \PYG{l+m+mi}{1}
+\end{Verbatim}

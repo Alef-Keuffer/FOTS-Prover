@@ -1,0 +1,63 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+
+\PYG{k}{class} \PYG{n+nc}{BMCInduction}\PYG{p}{:}
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{system}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{system} \PYG{o}{=} \PYG{n}{system}
+
+    \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}simple\PYGZus{}path}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{k}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Simple path constraint for k\PYGZhy{}induction:}
+\PYG{l+s+sd}{        each time encodes a different state}
+\PYG{l+s+sd}{        \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{n}{res} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{k} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{):}
+            \PYG{n}{subs\PYGZus{}i} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{system}\PYG{o}{.}\PYG{n}{get\PYGZus{}subs}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)}
+            \PYG{k}{for} \PYG{n}{j} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{i} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{k} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{):}
+                \PYG{n}{state} \PYG{o}{=} \PYG{p}{[]}
+                \PYG{n}{subs\PYGZus{}j} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{system}\PYG{o}{.}\PYG{n}{get\PYGZus{}subs}\PYG{p}{(}\PYG{n}{j}\PYG{p}{)}
+                \PYG{k}{for} \PYG{n}{v} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{system}\PYG{o}{.}\PYG{n}{variables}\PYG{p}{:}
+                    \PYG{n}{v\PYGZus{}i} \PYG{o}{=} \PYG{n}{v}\PYG{o}{.}\PYG{n}{substitute}\PYG{p}{(}\PYG{n}{subs\PYGZus{}i}\PYG{p}{)}
+                    \PYG{n}{v\PYGZus{}j} \PYG{o}{=} \PYG{n}{v}\PYG{o}{.}\PYG{n}{substitute}\PYG{p}{(}\PYG{n}{subs\PYGZus{}j}\PYG{p}{)}
+                    \PYG{n}{state}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{Not}\PYG{p}{(}\PYG{n}{EqualsOrIff}\PYG{p}{(}\PYG{n}{v\PYGZus{}i}\PYG{p}{,} \PYG{n}{v\PYGZus{}j}\PYG{p}{)))}
+                \PYG{n}{res}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{Or}\PYG{p}{(}\PYG{n}{state}\PYG{p}{))}
+        \PYG{k}{return} \PYG{n}{And}\PYG{p}{(}\PYG{n}{res}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}k\PYGZus{}hypothesis}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{prop}\PYG{p}{,} \PYG{n}{k}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Hypothesis for k\PYGZhy{}induction: each state up to k\PYGZhy{}1 fulfills the property\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{n}{res} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{k}\PYG{p}{):}
+            \PYG{n}{subs\PYGZus{}i} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{system}\PYG{o}{.}\PYG{n}{get\PYGZus{}subs}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)}
+            \PYG{n}{res}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{prop}\PYG{o}{.}\PYG{n}{substitute}\PYG{p}{(}\PYG{n}{subs\PYGZus{}i}\PYG{p}{))}
+        \PYG{k}{return} \PYG{n}{And}\PYG{p}{(}\PYG{n}{res}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}bmc}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{prop}\PYG{p}{,} \PYG{n}{k}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Returns the BMC encoding at step k\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{n}{init\PYGZus{}0} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{system}\PYG{o}{.}\PYG{n}{init}\PYG{o}{.}\PYG{n}{substitute}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{system}\PYG{o}{.}\PYG{n}{get\PYGZus{}subs}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{))}
+        \PYG{n}{prop\PYGZus{}k} \PYG{o}{=} \PYG{n}{prop}\PYG{o}{.}\PYG{n}{substitute}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{system}\PYG{o}{.}\PYG{n}{get\PYGZus{}subs}\PYG{p}{(}\PYG{n}{k}\PYG{p}{))}
+        \PYG{k}{return} \PYG{n}{And}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{system}\PYG{o}{.}\PYG{n}{get\PYGZus{}unrolling}\PYG{p}{(}\PYG{n}{k}\PYG{p}{),} \PYG{n}{init\PYGZus{}0}\PYG{p}{,} \PYG{n}{Not}\PYG{p}{(}\PYG{n}{prop\PYGZus{}k}\PYG{p}{))}
+
+    \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}k\PYGZus{}induction}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{prop}\PYG{p}{,} \PYG{n}{k}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Returns the K\PYGZhy{}Induction encoding at step K\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{n}{subs\PYGZus{}k} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{system}\PYG{o}{.}\PYG{n}{get\PYGZus{}subs}\PYG{p}{(}\PYG{n}{k}\PYG{p}{)}
+        \PYG{n}{prop\PYGZus{}k} \PYG{o}{=} \PYG{n}{prop}\PYG{o}{.}\PYG{n}{substitute}\PYG{p}{(}\PYG{n}{subs\PYGZus{}k}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n}{And}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{system}\PYG{o}{.}\PYG{n}{get\PYGZus{}unrolling}\PYG{p}{(}\PYG{n}{k}\PYG{p}{),}
+                   \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}k\PYGZus{}hypothesis}\PYG{p}{(}\PYG{n}{prop}\PYG{p}{,} \PYG{n}{k}\PYG{p}{),}
+                   \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}simple\PYGZus{}path}\PYG{p}{(}\PYG{n}{k}\PYG{p}{),}
+                   \PYG{n}{Not}\PYG{p}{(}\PYG{n}{prop\PYGZus{}k}\PYG{p}{))}
+
+    \PYG{k}{def} \PYG{n+nf}{check\PYGZus{}property}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{prop}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Interleaves BMC and K\PYGZhy{}Ind to verify the property.\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Checking property }\PYG{l+s+si}{\PYGZpc{}s}\PYG{l+s+s2}{...\PYGZdq{}} \PYG{o}{\PYGZpc{}} \PYG{n}{prop}\PYG{p}{)}
+        \PYG{k+kn}{from} \PYG{n+nn}{ply.cpp} \PYG{k+kn}{import} \PYG{n}{xrange}
+        \PYG{k}{for} \PYG{n}{b} \PYG{o+ow}{in} \PYG{n}{xrange}\PYG{p}{(}\PYG{l+m+mi}{100}\PYG{p}{):}
+            \PYG{n}{f} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}bmc}\PYG{p}{(}\PYG{n}{prop}\PYG{p}{,} \PYG{n}{b}\PYG{p}{)}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}   [BMC]    Checking bound }\PYG{l+s+si}{\PYGZpc{}d}\PYG{l+s+s2}{...\PYGZdq{}} \PYG{o}{\PYGZpc{}} \PYG{p}{(}\PYG{n}{b} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{))}
+            \PYG{k}{if} \PYG{n}{is\PYGZus{}sat}\PYG{p}{(}\PYG{n}{f}\PYG{p}{):}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}\PYGZhy{}\PYGZhy{}\PYGZgt{} Bug found at step }\PYG{l+s+si}{\PYGZpc{}d}\PYG{l+s+s2}{\PYGZdq{}} \PYG{o}{\PYGZpc{}} \PYG{p}{(}\PYG{n}{b} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{))}
+                \PYG{k}{return}
+
+            \PYG{n}{f} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}k\PYGZus{}induction}\PYG{p}{(}\PYG{n}{prop}\PYG{p}{,} \PYG{n}{b}\PYG{p}{)}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}   [K\PYGZhy{}IND]  Checking bound }\PYG{l+s+si}{\PYGZpc{}d}\PYG{l+s+s2}{...\PYGZdq{}} \PYG{o}{\PYGZpc{}} \PYG{p}{(}\PYG{n}{b} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{))}
+            \PYG{k}{if} \PYG{n}{is\PYGZus{}unsat}\PYG{p}{(}\PYG{n}{f}\PYG{p}{):}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}\PYGZhy{}\PYGZhy{}\PYGZgt{} The system is safe!\PYGZdq{}}\PYG{p}{)}
+                \PYG{k}{return}
+\end{Verbatim}

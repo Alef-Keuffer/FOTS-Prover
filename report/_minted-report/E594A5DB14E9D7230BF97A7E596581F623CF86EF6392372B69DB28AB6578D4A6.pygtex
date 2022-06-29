@@ -1,0 +1,19 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{p}{\PYGZob{}}
+\PYG{n}{assume} \PYG{n}{c} \PYG{o}{=} \PYG{l+m+mi}{0} \PYG{o+ow}{and} \PYG{n}{z} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{n}{c} \PYG{o}{=} \PYG{l+m+mi}{2}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}} \PYG{o}{||}
+\PYG{p}{\PYGZob{}}
+\PYG{n}{assume} \PYG{n}{c} \PYG{o}{=} \PYG{l+m+mi}{0} \PYG{o+ow}{and} \PYG{n}{z} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{n}{c} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}} \PYG{o}{||}
+\PYG{p}{\PYGZob{}}
+\PYG{n}{assume} \PYG{n}{c} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o+ow}{and} \PYG{n}{z} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{n}{c}\PYG{l+s+s1}{\PYGZsq{} = 0;}
+\PYG{n}{z} \PYG{o}{=} \PYG{n}{z} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}} \PYG{o}{||}
+\PYG{p}{\PYGZob{}}
+\PYG{n}{assume} \PYG{n}{c} \PYG{o}{=} \PYG{l+m+mi}{2}\PYG{p}{;}
+\PYG{n}{skip}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

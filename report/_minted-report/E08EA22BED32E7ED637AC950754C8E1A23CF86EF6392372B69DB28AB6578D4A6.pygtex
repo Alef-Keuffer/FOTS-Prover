@@ -1,0 +1,42 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{IMC}\PYG{p}{(}\PYG{n}{TS}\PYG{p}{:} \PYG{n}{TransitionSystem}\PYG{p}{,}
+        \PYG{n}{P}\PYG{p}{:} \PYG{n}{FNode}\PYG{p}{,}
+        \PYG{n}{S}\PYG{o}{=}\PYG{k+kc}{None}\PYG{p}{,}
+        \PYG{n}{customInterpolator}\PYG{o}{=}\PYG{k+kc}{False}\PYG{p}{):}
+
+    \PYG{k}{if} \PYG{o+ow}{not} \PYG{n}{S}\PYG{p}{:}
+        \PYG{n}{S} \PYG{o}{=} \PYG{n}{TS}\PYG{o}{.}\PYG{n}{init}
+
+    \PYG{k}{if} \PYG{n}{m} \PYG{o}{:=} \PYG{n}{get\PYGZus{}model}\PYG{p}{(}\PYG{n}{S} \PYG{o}{\PYGZam{}} \PYG{n}{Not}\PYG{p}{(}\PYG{n}{P}\PYG{p}{)):}
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{m}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n}{Status}\PYG{o}{.}\PYG{n}{UNSAFE1}
+
+    \PYG{n}{k} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+    \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{R\PYGZus{}i} \PYG{o}{=} \PYG{n}{S}\PYG{o}{.}\PYG{n}{substitute}\PYG{p}{(}\PYG{n}{TS}\PYG{o}{.}\PYG{n}{get\PYGZus{}subs}\PYG{p}{(}\PYG{n}{i}\PYG{p}{))}
+
+    \PYG{k}{while} \PYG{k+kc}{True}\PYG{p}{:}
+        \PYG{n}{A} \PYG{o}{=} \PYG{n}{R\PYGZus{}i} \PYG{o}{\PYGZam{}} \PYG{n}{TS}\PYG{o}{.}\PYG{n}{get\PYGZus{}unrolling}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)}
+        \PYG{n}{B} \PYG{o}{=} \PYG{n}{And}\PYG{p}{(}\PYG{n}{And}\PYG{p}{(}\PYG{n}{TS}\PYG{o}{.}\PYG{n}{get\PYGZus{}unrolling}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{k}\PYG{p}{)),} \PYG{n}{Or}\PYG{p}{(}\PYG{n}{get\PYGZus{}unrolling}\PYG{p}{(}\PYG{n}{Not}\PYG{p}{(}\PYG{n}{P}\PYG{p}{),} \PYG{n}{k}\PYG{p}{)))}
+        \PYG{k}{if} \PYG{n}{m} \PYG{o}{:=} \PYG{n}{is\PYGZus{}sat}\PYG{p}{(}\PYG{n}{A} \PYG{o}{\PYGZam{}} \PYG{n}{B}\PYG{p}{):}
+            \PYG{k}{if} \PYG{n}{is\PYGZus{}valid}\PYG{p}{(}\PYG{n}{R\PYGZus{}i}\PYG{o}{.}\PYG{n}{EqualsOrIff}\PYG{p}{(}\PYG{n}{S}\PYG{p}{)):}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{m}\PYG{p}{)}
+                \PYG{k}{return} \PYG{n}{Status}\PYG{o}{.}\PYG{n}{UNSAFE2}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n}{k} \PYG{o}{+=} \PYG{l+m+mi}{1}
+                \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}
+                \PYG{n}{R\PYGZus{}i} \PYG{o}{=} \PYG{n}{S}\PYG{o}{.}\PYG{n}{substitute}\PYG{p}{(}\PYG{n}{TS}\PYG{o}{.}\PYG{n}{get\PYGZus{}subs}\PYG{p}{(}\PYG{n}{i}\PYG{p}{))}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{k}{if} \PYG{n}{customInterpolator}\PYG{p}{:}
+                \PYG{n}{I\PYGZus{}i} \PYG{o}{=} \PYG{n}{bin\PYGZus{}itp}\PYG{p}{(}\PYG{n}{A}\PYG{p}{,} \PYG{n}{B}\PYG{p}{)}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n}{I\PYGZus{}i} \PYG{o}{=} \PYG{n}{binary\PYGZus{}interpolant}\PYG{p}{(}\PYG{n}{A}\PYG{p}{,} \PYG{n}{B}\PYG{p}{)}
+
+            \PYG{k}{if} \PYG{n}{is\PYGZus{}valid}\PYG{p}{(}\PYG{n}{I\PYGZus{}i}\PYG{o}{.}\PYG{n}{Implies}\PYG{p}{(}\PYG{n}{R\PYGZus{}i}\PYG{p}{)):}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Proved at step }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+                \PYG{k}{return} \PYG{n}{Status}\PYG{o}{.}\PYG{n}{SAFE}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n}{R\PYGZus{}i} \PYG{o}{=} \PYG{n}{R\PYGZus{}i} \PYG{o}{|} \PYG{n}{I\PYGZus{}i}
+                \PYG{n}{i} \PYG{o}{+=} \PYG{l+m+mi}{1}
+\end{Verbatim}
