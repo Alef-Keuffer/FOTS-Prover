@@ -443,8 +443,8 @@ PySMT\footnote{\url{https://pysmt.readthedocs.io/en/latest/tutorials.html#model-
 só classe Python, que é construída a partir da representação em PySMT de um FOTS.
 Este exemplo usa como referências \cite{bmc, kind_original}.\\
 
-Apresenta-se de seguida um fragmento dessa classe com o método de verificação
-de propriedades. A classe completa está em ~\ref{code:bmc_kind}.
+Apresenta-se de seguida um fragmento da implementação.
+A implementação completa está em ~\ref{code:bmc_kind}.
 
 
 
@@ -452,29 +452,22 @@ de propriedades. A classe completa está em ~\ref{code:bmc_kind}.
 
 \begin{code}
 \begin{minted}{python}
+def BMC_IND(I, T, P):
+    """Interleaves BMC and K-Ind to verify the property."""
+    print(f"Checking property {P[0]}...")
+    from ply.cpp import xrange
+    for b in xrange(100):
+        f = get_bmc(I, T, P, b)
+        print(f"   [BMC]    Checking bound {b + 1}...")
+        if is_sat(f):
+            print(f"--> Bug found at step {b + 1}")
+            return
 
-class BMCInduction:
-    def __init__(self, system):
-        self.system = system
-
-    ...
-
-    def check_property(self, prop):
-        """Interleaves BMC and K-Ind to verify the property."""
-        print("Checking property %s..." % prop)
-        from ply.cpp import xrange
-        for b in xrange(100):
-            f = self.get_bmc(prop, b)
-            print("   [BMC]    Checking bound %d..." % (b + 1))
-            if is_sat(f):
-                print("--> Bug found at step %d" % (b + 1))
-                return
-
-            f = self.get_k_induction(prop, b)
-            print("   [K-IND]  Checking bound %d..." % (b + 1))
-            if is_unsat(f):
-                print("--> The system is safe!")
-                return
+        f = get_k_induction(I, T, P, b)
+        print(f"   [K-IND]  Checking bound {b + 1}...")
+        if is_unsat(f):
+            print("--> The system is safe!")
+            return
 
 \end{minted}
 \end{code}
@@ -942,67 +935,50 @@ No entanto, há várias possibilidades para o melhorar:
 
 \begin{code}
 \begin{minted}{python}
+def get_simple_path(I, T, P, k):
+    """Simple path constraint for k-induction:
+    each time encodes a different state
+    """
+    variables = get_variables(I, T, P)
+    res = []
+    for i in range(k + 1):
+        for j in range(i + 1, k + 1):
+            state = []
+            for v in variables:
+                state.append(Not(EqualsOrIff(v[i], v[j])))
+            res.append(Or(state))
+    return And(res)
 
-class BMCInduction:
-    def __init__(self, system):
-        self.system = system
 
-    def get_simple_path(self, k):
-        """Simple path constraint for k-induction:
-        each time encodes a different state
-        """
-        res = []
-        for i in range(k + 1):
-            subs_i = self.system.get_subs(i)
-            for j in range(i + 1, k + 1):
-                state = []
-                subs_j = self.system.get_subs(j)
-                for v in self.system.variables:
-                    v_i = v.substitute(subs_i)
-                    v_j = v.substitute(subs_j)
-                    state.append(Not(EqualsOrIff(v_i, v_j)))
-                res.append(Or(state))
-        return And(res)
+def get_k_induction(I, T, P, k):
+    """Returns the K-Induction encoding at step K"""
+    return And(T[:k],
+               P[:k],
+               get_simple_path(I, T, P, k),
+               Not(P[k]))
 
-    def get_k_hypothesis(self, prop, k):
-        """Hypothesis for k-induction: each state up to k-1 fulfills the property"""
-        res = []
-        for i in range(k):
-            subs_i = self.system.get_subs(i)
-            res.append(prop.substitute(subs_i))
-        return And(res)
 
-    def get_bmc(self, prop, k):
-        """Returns the BMC encoding at step k"""
-        init_0 = self.system.init.substitute(self.system.get_subs(0))
-        prop_k = prop.substitute(self.system.get_subs(k))
-        return And(self.system.get_unrolling(k), init_0, Not(prop_k))
+def get_bmc(I, T, P, k):
+    """Returns the BMC encoding at step k"""
+    return And(I[0], T[:k], Not(P[k]))
 
-    def get_k_induction(self, prop, k):
-        """Returns the K-Induction encoding at step K"""
-        subs_k = self.system.get_subs(k)
-        prop_k = prop.substitute(subs_k)
-        return And(self.system.get_unrolling(k),
-                   self.get_k_hypothesis(prop, k),
-                   self.get_simple_path(k),
-                   Not(prop_k))
 
-    def check_property(self, prop):
-        """Interleaves BMC and K-Ind to verify the property."""
-        print("Checking property %s..." % prop)
-        from ply.cpp import xrange
-        for b in xrange(100):
-            f = self.get_bmc(prop, b)
-            print("   [BMC]    Checking bound %d..." % (b + 1))
-            if is_sat(f):
-                print("--> Bug found at step %d" % (b + 1))
-                return
+def BMC_IND(I, T, P):
+    """Interleaves BMC and K-Ind to verify the property."""
+    print(f"Checking property {P[0]}...")
+    from ply.cpp import xrange
+    for b in xrange(100):
+        f = get_bmc(I, T, P, b)
+        print(f"   [BMC]    Checking bound {b + 1}...")
+        if is_sat(f):
+            print(f"--> Bug found at step {b + 1}")
+            return
 
-            f = self.get_k_induction(prop, b)
-            print("   [K-IND]  Checking bound %d..." % (b + 1))
-            if is_unsat(f):
-                print("--> The system is safe!")
-                return
+        f = get_k_induction(I, T, P, b)
+        print(f"   [K-IND]  Checking bound {b + 1}...")
+        if is_unsat(f):
+            print("--> The system is safe!")
+            return
 \end{minted}
 \caption{Implementação do algoritmo de BMC + \kind retirada de \href{https://pysmt.readthedocs.io/en/latest/tutorials.html##model-checking-an-infinite-state-system-bmc-k-induction-in-150-lines}{documentação de PySMT}}
 \label{code:bmc_kind}

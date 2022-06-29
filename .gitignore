@@ -44,3 +44,5 @@ wd
 *.fdb_latexmk
 *.fls
 *.lof
+*.lol
+report/**/*.pygtex
