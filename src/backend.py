@@ -8,7 +8,7 @@ from pprint import pprint
 # General
 from pysmt.solvers.solver import Model
 
-from predicate import Predicate, str_model
+from predicate import Predicate, str_model, get_index
 
 INDENT = '  '
 
