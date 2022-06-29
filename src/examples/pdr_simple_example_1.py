@@ -6,9 +6,9 @@ if __name__ == '__main__':
     """
     .. code-block
 
-        x = 2
-        while True:
-            x = x + 1
+        x = 10
+        while x > 1:
+            x = x - 1
 
     example from p.7 of D. Beyer and M. Dangl, “Software Verification with PDR:
     Implementation and Empirical Evaluation of the State of the Art,” arXiv:1908.06271
@@ -16,7 +16,7 @@ if __name__ == '__main__':
     http://arxiv.org/abs/1908.06271 """
 
     x = Predicate(Variable('x', INT))
-    I = Predicate(x[0].Equals(2))
+    I = Predicate(x[0].Equals(10))
     T = Predicate(x[1].Equals(2 * x[0] - 1))
     P_true = Predicate(x[0] > 0)
 
