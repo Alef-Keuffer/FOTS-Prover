@@ -28,7 +28,7 @@ def prime(v: FNode) -> FNode:
     return at_time_plus(v, 1)
 
 
-def instantiate_predicate_variables_at(P: FNode, i: int = 0) -> FNode:
+def instantiate_predicate_variables_at_plus(P: FNode, i: int = 0) -> FNode:
     """
     Assumes the variables in :math:`P` are of the form `<var_name>'@'<number>` Will
     return a predicate with variables indexed using `i`. For example, suppose we
@@ -77,7 +77,7 @@ class Predicate:
         self.formula = formula
 
     def at(self, i: int = 0) -> FNode:
-        return instantiate_predicate_variables_at(self.formula, i)
+        return instantiate_predicate_variables_at_plus(self.formula, i)
 
     def prime(self) -> FNode:
         return self.at(1)
@@ -90,8 +90,8 @@ class Predicate:
         if start > end:
             return TRUE()
         if start == end:
-            return instantiate_predicate_variables_at(self.formula, start)
-        return And([instantiate_predicate_variables_at(self.formula, i)
+            return instantiate_predicate_variables_at_plus(self.formula, start)
+        return And([instantiate_predicate_variables_at_plus(self.formula, i)
                     for i in range(start, end + 1)])
 
     def unroll_from_0(self, end: int) -> FNode:
@@ -121,7 +121,7 @@ def get_predicate(P: FNode) -> Callable[[int], FNode]:
     """
 
     def new_P(i: int = 0) -> FNode:
-        return instantiate_predicate_variables_at(P, i)
+        return instantiate_predicate_variables_at_plus(P, i)
 
     return new_P
 
