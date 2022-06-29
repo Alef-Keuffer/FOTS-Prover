@@ -1,6 +1,6 @@
 if __name__ == '__main__':
     from pysmt.shortcuts import *
-    from backend import PDR, IMC
+    from backend import PDR, IMC, BMCInduction, BMC_IND
     from predicate import Variable, Predicate
 
     """
@@ -18,11 +18,15 @@ if __name__ == '__main__':
     x = Predicate(Variable('x', INT))
     I = Predicate(x[0].Equals(2))
     T = Predicate(x[1].Equals(2 * x[0] - 1))
-    P = Predicate(x[0] > 0)
+    P_true = Predicate(x[0] > 0)
 
-    PDR(P, I, T)
-    IMC(P, I, T)
+    # bmcind(I, T, P)
+    print("Checking true property:")
+    for algo in [BMC_IND, PDR, IMC]:
+        print(f"Using {algo.__name__}:")
+        algo(I, T, P_true)
 
     P_false = Predicate(x[0] < 0)
-    PDR(P_false, I, T)
-    IMC(P_false, I, T)
+    print("Checking false property:")
+    for algo in [BMC_IND, PDR, IMC]:
+        algo(I, T, P_false)
