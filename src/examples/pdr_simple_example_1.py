@@ -1,18 +1,28 @@
 if __name__ == '__main__':
     from pysmt.shortcuts import *
+    from backend import PDR, IMC
+    from predicate import Variable, Predicate
 
-    from backend import next_var, TransitionSystem, PDR, IMC
+    """
+    .. code-block
 
-    x = Symbol('x', INT)
-    nx = next_var(x)
-    I = x.Equals(2)
-    T = nx.Equals(2 * x - 1)
-    P = x > 0
+        x = 2
+        while True:
+            x = x + 1
 
-    TS = TransitionSystem(I, T)
-    PDR(P, TS)
-    IMC(P, TS)
+    example from p.7 of D. Beyer and M. Dangl, “Software Verification with PDR:
+    Implementation and Empirical Evaluation of the State of the Art,” arXiv:1908.06271
+    [cs], Feb. 2020, Accessed: Mar. 05, 2022. [Online]. Available:
+    http://arxiv.org/abs/1908.06271 """
 
-    P_false = x < 0
-    PDR(P_false, TS)
-    IMC(P_false, TS)
+    x = Predicate(Variable('x', INT))
+    I = Predicate(x[0].Equals(2))
+    T = Predicate(x[1].Equals(2 * x[0] - 1))
+    P = Predicate(x[0] > 0)
+
+    PDR(P, I, T)
+    IMC(P, I, T)
+
+    P_false = Predicate(x[0] < 0)
+    PDR(P_false, I, T)
+    IMC(P_false, I, T)
