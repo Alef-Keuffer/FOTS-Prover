@@ -3,6 +3,8 @@ from pysmt.shortcuts import *
 import re
 from typing import NewType, Callable
 
+from pysmt.solvers.solver import Model
+
 
 def Variable(name: str, typename=types.BOOL) -> FNode:
     return Symbol(f"{name}@0", typename)
@@ -39,6 +41,35 @@ def instantiate_predicate_variables_at(P: FNode, i: int = 0) -> FNode:
     """
     substitutions = {v: at_time_plus(v, i) for v in P.get_free_variables()}
     return P.substitute(substitutions)
+
+
+def get_name(s: FNode) -> str:
+    import re
+    return re.search(r'(.*)@', s.symbol_name()).group(1)
+
+
+def get_index(s: FNode, with_type=str):
+    import re
+    return with_type(re.search(r'(.*)@(.*)', s.symbol_name()).group(2))
+
+
+def str_model(m: Model) -> str:
+    """
+    Assuming that :py:`Model` `m` represents a trace counterexample, this function
+    returns a string with the variables sorted by intex and highlights with an asterisk
+    the variables that change from one state to the next.
+    """
+    d = {}
+    s = []
+    for x, v in sorted(m, key=lambda t: int(get_index(t[0]))):
+        n = get_name(x)
+        if get_index(x) != '0' and d[n] != v:
+            s.append(f'* {x} := {v}')
+        else:
+            s.append(f'  {x} := {v}')
+        d[n] = v
+
+    return '\n'.join(s)
 
 
 class Predicate:

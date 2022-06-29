@@ -1,5 +1,5 @@
 import textwrap
-from typing import Container, Callable, Collection, Set
+from typing import Callable, Set
 from pysmt.fnode import FNode
 from pysmt.shortcuts import *
 from enum import Enum, auto
@@ -8,7 +8,7 @@ from pprint import pprint
 # General
 from pysmt.solvers.solver import Model
 
-from predicate import Predicate
+from predicate import Predicate, str_model
 
 INDENT = '  '
 
@@ -21,93 +21,6 @@ class Status(Enum):
     SAT = auto()
     UNSAT = auto()
     UNKNOWN = auto()
-
-
-def next_var(v: FNode):
-    """Returns the 'next' of the given variable"""
-    return Symbol(f"next({v.symbol_name()})", v.symbol_type())
-
-
-def at_time(v: FNode, t):
-    """Builds an SMT variable representing v at time t"""
-    return Symbol(f"[{t}]{v.symbol_name()}", v.symbol_type())
-
-
-def is_next(v: FNode):
-    s = v.symbol_name()
-    # return 'next(' == s[:5] and ')' == s[-1]
-    return 'next(' in s
-
-
-def get_name(s: FNode):
-    import re
-    return re.search(r'(.*)@', s.symbol_name()).group(1)
-
-
-def get_index(s: FNode):
-    import re
-    return re.search(r'(.*)@(.*)', s.symbol_name()).group(2)
-
-
-def str_model(m: Model):
-    d = {}
-    s = []
-    for x, v in sorted(m, key=lambda t: int(get_index(t[0]))):
-        n = get_name(x)
-        if get_index(x) != '0' and d[n] != v:
-            s.append(f'* {x} := {v}')
-        else:
-            s.append(f'  {x} := {v}')
-        d[n] = v
-
-    return '\n'.join(s)
-    # return '\n'.join(f"{x} := {v}" for x, v in sorted(m, key=lambda t: t[0].symbol_name()))
-
-
-def get_subs(P: Container[FNode] | FNode, i: int):
-    """
-    Builds a map from :math:`x` to :math:`x_i` and from :math:`x'` to :math:`x_{i+1}`,
-    for all :math:`x` in :math:`P`.
-    """
-    if isinstance(P, FNode):
-        P = P.get_free_variables()
-        P = {v for v in P if not is_next(v)}
-    subs_i = {}
-    for v in P:
-        subs_i[v] = at_time(v, i)
-        subs_i[next_var(v)] = at_time(v, i + 1)
-    return subs_i
-
-
-def get_unrolling(P: FNode, k: int, j: int = 0):
-    """Unrolling of the property from :math:`j` to :math:`k`:
-
-    I.e. :math:`P^j ∧ P^{j+1} ∧ ⋯ ∧ P^{k-1} ∧ P^k`
-    """
-    assert j <= k
-    res = []
-    for i in range(j, k + 1):
-        subs_i = get_subs(P, i)
-        res.append(P.substitute(subs_i))
-    return And(res)
-
-
-class TransitionSystem(object):
-    """Trivial representation of a FOTS (First Order Transition System)."""
-
-    def __init__(self, init: FNode, trans: FNode):
-        self.variables: list[FNode] = list(
-            set(init.get_free_variables()).union((trans.get_free_variables())))
-        self.init = init
-        self.trans = trans
-
-    def get_subs(self, i):
-        """See :func:`get_subs`"""
-        return get_subs(self.variables, i)
-
-    def get_unrolling(self, k, j=0):
-        """See :func:`get_unrolling`"""
-        return get_unrolling(self.trans, k, j)
 
 
 # BMC Induction
@@ -227,7 +140,7 @@ def IMC(S: Predicate,
     # from R(i) in at most k steps.
     while True:
         A = R & T[0]
-        B = T[1:k-1] & Or(~P[l] for l in range(k+1))
+        B = T[1:k - 1] & Or(~P[l] for l in range(k + 1))
         print(f"[{i=},{k=}] Checking BMC from R(i)")
         if m := get_model(A & B):
             # the error might be real or spurious, caused by an insufficient value of k
@@ -253,11 +166,7 @@ def IMC(S: Predicate,
             # a fixpoint check is carried out: if I(i) |= R(i), it means that all
             # states have been covered, and the system is safe; otherwise, R(i + 1) is
             # set to R(i) ∨ I(i) and the procedure continues.
-            # solver = Solver()
-            # solver.add_assertion(I_i)
-            # if is_valid(I.Implies(R)):
             if is_valid(I.Implies(R)):
-            # if solver.is_valid(R_i):
                 # the current R(i) corresponds to an inductive invariant P̂ stronger
                 # than P: on one side, S |= R(i), moreover R(i) ∧ T |= I'(i) and I(i)
                 # |= R(i) imply R(i) ∧ T |= R'(i); on the other side, the fact that at
@@ -303,7 +212,8 @@ def _strenghten(k: int, Inv: Predicate, o: Predicate) -> FNode:
     """
 
 
-def _lift(k: int, Inv: Predicate, Q: Predicate, s: Predicate, T: Predicate) -> None | FNode:
+def _lift(k: int, Inv: Predicate, Q: Predicate, s: Predicate,
+          T: Predicate) -> None | FNode:
     """
     We can implement lift using Craig interpolation between
 
@@ -314,11 +224,11 @@ def _lift(k: int, Inv: Predicate, Q: Predicate, s: Predicate, T: Predicate) -> N
     the resulting interpolant satisfies the criteria for :math:`C` to be a valid
     lifting of s according to the requirements towards the function lift.
     """
-    A = s@0
-    B = (Inv@0 &
+    A = s[0]
+    B = (Inv[0] &
          Q[:k - 1] &
          T[:k - 1]
-         ).Implies(Not(Q@k))
+         ).Implies(Not(Q @ k))
     from pysmt.exceptions import NoSolverAvailableError
     try:
         return binary_interpolant(A, B)
@@ -334,7 +244,7 @@ def get_base_case(k: int, I: Predicate, T: Predicate, P: Predicate) -> FNode:
     """
     return And(
         I[0],
-        Or([T[:n-1] & ~P[n] for n in range(k)])
+        Or([T[:n - 1] & ~P[n] for n in range(k)])
     )
 
 
@@ -351,12 +261,12 @@ def get_step_case(k: int, T: Predicate, P: Predicate) -> FNode:
         with the idea that making :math:`n=0` in pySMT is equivalent to the formula above.
     """
     return And(
-            (P[:k - 1]),
-            (T[:k - 1]),
-            # Should we do Or(~P[i] for i in range(k+1)) instead of
-            # ~P[k]?
-            ~P[k],
-            # Or(~P[i] for i in range(k+1))
+        (P[:k - 1]),
+        (T[:k - 1]),
+        # Should we do Or(~P[i] for i in range(k+1)) instead of
+        # ~P[k]?
+        ~P[k],
+        # Or(~P[i] for i in range(k+1))
     )
 
 
@@ -442,8 +352,8 @@ def PDR(I: Predicate,
             if print_info:
                 print(f"[{k=}] base-case check failed")
                 print(f"{INDENT}Counterexample:")
-                # print(textwrap.indent(f"{str_model(m)}", INDENT))
-                print(textwrap.indent(f"{m}", INDENT))
+                print(textwrap.indent(f"{str_model(m)}", INDENT))
+                # print(textwrap.indent(f"{m}", INDENT))
             return False
         # end ############################################################################
 
@@ -454,7 +364,7 @@ def PDR(I: Predicate,
         # to prove that BMC fully explored the state space of the program by checking
         # that no state with distance k′ > k−1 to the initial state is reachable. If this
         # check is successful, the algorithm terminates.
-        forward_condition = I[0] & T[:k-1]
+        forward_condition = I[0] & T[:k - 1]
         if is_unsat(forward_condition):
             print(f"[{k=}] Proved correctness: successful forward condition check")
             pprint(forward_condition.serialize())
