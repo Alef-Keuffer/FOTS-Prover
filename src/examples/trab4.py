@@ -1,6 +1,4 @@
-from pysmt.shortcuts import *
 from backend import *
-from imc import finite_run
 from predicate import *
 
 
