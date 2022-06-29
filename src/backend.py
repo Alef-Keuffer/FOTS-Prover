@@ -25,66 +25,58 @@ class Status(Enum):
 
 # BMC Induction
 
-class BMCInduction:
-    def __init__(self, system):
-        self.system = system
 
-    def get_simple_path(self, k):
-        """Simple path constraint for k-induction:
-        each time encodes a different state
-        """
-        res = []
-        for i in range(k + 1):
-            subs_i = self.system.get_subs(i)
-            for j in range(i + 1, k + 1):
-                state = []
-                subs_j = self.system.get_subs(j)
-                for v in self.system.variables:
-                    v_i = v.substitute(subs_i)
-                    v_j = v.substitute(subs_j)
-                    state.append(Not(EqualsOrIff(v_i, v_j)))
-                res.append(Or(state))
-        return And(res)
+def get_variables(*ps):
+    return (v for v in
+            set(q for p in ps
+                for q in p[0].get_free_variables()
+                if get_index(q) == '0'))
 
-    def get_k_hypothesis(self, prop, k):
-        """Hypothesis for k-induction: each state up to k-1 fulfills the property"""
-        res = []
-        for i in range(k):
-            subs_i = self.system.get_subs(i)
-            res.append(prop.substitute(subs_i))
-        return And(res)
 
-    def get_bmc(self, prop, k):
-        """Returns the BMC encoding at step k"""
-        init_0 = self.system.init.substitute(self.system.get_subs(0))
-        prop_k = prop.substitute(self.system.get_subs(k))
-        return And(self.system.get_unrolling(k), init_0, Not(prop_k))
+def get_simple_path(I, T, P, k):
+    """Simple path constraint for k-induction:
+    each time encodes a different state
+    """
+    variables = get_variables(I, T, P)
+    res = []
+    for i in range(k + 1):
+        for j in range(i + 1, k + 1):
+            state = []
+            for v in variables:
+                state.append(Not(EqualsOrIff(v[i], v[j])))
+            res.append(Or(state))
+    return And(res)
 
-    def get_k_induction(self, prop, k):
-        """Returns the K-Induction encoding at step K"""
-        subs_k = self.system.get_subs(k)
-        prop_k = prop.substitute(subs_k)
-        return And(self.system.get_unrolling(k),
-                   self.get_k_hypothesis(prop, k),
-                   self.get_simple_path(k),
-                   Not(prop_k))
 
-    def check_property(self, prop):
-        """Interleaves BMC and K-Ind to verify the property."""
-        print("Checking property %s..." % prop)
-        from ply.cpp import xrange
-        for b in xrange(100):
-            f = self.get_bmc(prop, b)
-            print("   [BMC]    Checking bound %d..." % (b + 1))
-            if is_sat(f):
-                print("--> Bug found at step %d" % (b + 1))
-                return
+def get_k_induction(I, T, P, k):
+    """Returns the K-Induction encoding at step K"""
+    return And(T[:k],
+               P[:k],
+               get_simple_path(I, T, P, k),
+               Not(P[k]))
 
-            f = self.get_k_induction(prop, b)
-            print("   [K-IND]  Checking bound %d..." % (b + 1))
-            if is_unsat(f):
-                print("--> The system is safe!")
-                return
+
+def get_bmc(I, T, P, k):
+    """Returns the BMC encoding at step k"""
+    return And(I[0], T[:k], Not(P[k]))
+
+
+def BMC_IND(I, T, P):
+    """Interleaves BMC and K-Ind to verify the property."""
+    print(f"Checking property {P[0]}...")
+    from ply.cpp import xrange
+    for b in xrange(100):
+        f = get_bmc(I, T, P, b)
+        print(f"   [BMC]    Checking bound {b + 1}...")
+        if is_sat(f):
+            print(f"--> Bug found at step {b + 1}")
+            return
+
+        f = get_k_induction(I, T, P, b)
+        print(f"   [K-IND]  Checking bound {b + 1}...")
+        if is_unsat(f):
+            print("--> The system is safe!")
+            return
 
 
 # Interpolating Model Checking
